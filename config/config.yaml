@@ -1,0 +1,11 @@
+http:
+  hostname: ""
+  port: 8000
+  readTimeout: "5s"
+  writeTimeout: "10s"
+  idleTimeout: "2m"
+
+app:
+  name: "Goranchise"
+  environment: "local"
+  encryptionKey: "?E(G+KbPeShVmYq3t6w9z$C&F)J@McQf"
