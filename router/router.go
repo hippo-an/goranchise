@@ -24,6 +24,9 @@ func BuildRouter(c *container.Container) {
 		middleware.Logger(),
 		middleware.Static(StaticDir),
 		session.Middleware(sessions.NewCookieStore([]byte(c.Config.App.EncryptionKey))),
+		middleware.CSRFWithConfig(middleware.CSRFConfig{
+			TokenLookup: "form:csrf",
+		}),
 	)
 
 	ctr := controllers.NewController(c)

@@ -2,9 +2,15 @@ package controllers
 
 import (
 	"github.com/hippo-an/goranchise/msg"
+	"github.com/hippo-an/goranchise/pager"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"html/template"
 	"net/http"
+)
+
+const (
+	DefaultItemsPerPage = 20
 )
 
 type Page struct {
@@ -23,6 +29,8 @@ type Page struct {
 		Description string
 		Keywords    []string
 	}
+	Pager pager.Pager
+	CSRF  string
 }
 
 func NewPage(c echo.Context) Page {
@@ -31,9 +39,14 @@ func NewPage(c echo.Context) Page {
 		Reverse:    c.Echo().Reverse,
 		Path:       c.Request().URL.Path,
 		StatusCode: http.StatusOK,
+		Pager:      pager.NewPager(c, DefaultItemsPerPage),
 	}
 
-	p.IsAuth = p.Path == "/"
+	p.IsHome = p.Path == "/"
+
+	if csrf := c.Get(middleware.DefaultCSRFConfig.ContextKey); csrf != nil {
+		p.CSRF = csrf.(string)
+	}
 	return p
 }
 
