@@ -77,6 +77,12 @@ func (c *Controller) parsePageTemplate(p Page) error {
 			return err
 		}
 
+		parsed, err = parsed.ParseGlob(fmt.Sprintf("%s/components/*%s", TemplateDir, TemplateExt))
+
+		if err != nil {
+			return err
+		}
+
 		templates.Store(p.Name, parsed)
 
 	}

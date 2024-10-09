@@ -39,13 +39,15 @@ func BuildRouter(c *container.Container) {
 }
 
 func navRoutes(e *echo.Echo, ctr controllers.Controller) {
-	//home := controllers.Home{Controller: ctr}
-	//e.GET("/", home.Get).Name = "home"
-	//about := controllers.About{Controller: ctr}
-	//e.GET("/about", about.Get).Name = "about"
-	//contact := controllers.Contact{Controller: ctr}
-	//e.GET("/contact", contact.Get).Name = "contact"
-	//e.POST("/contact", contact.Post).Name = "contact.post"
+	home := controllers.Home{Controller: ctr}
+	e.GET("/", home.Get).Name = "home"
+
+	about := controllers.About{Controller: ctr}
+	e.GET("/about", about.Get).Name = "about"
+
+	contact := controllers.Contact{Controller: ctr}
+	e.GET("/contact", contact.Get).Name = "contact"
+	e.POST("/contact", contact.Post).Name = "contact.post"
 }
 func userRoutes(e *echo.Echo, ctr controllers.Controller) {
 }

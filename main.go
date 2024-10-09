@@ -1,4 +1,4 @@
-package goranchise
+package main
 
 import (
 	"context"
