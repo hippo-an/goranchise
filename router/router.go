@@ -4,9 +4,10 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/hippo-an/goranchise/container"
 	"github.com/hippo-an/goranchise/controllers"
+	"github.com/hippo-an/goranchise/middleware"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	echomv "github.com/labstack/echo/v4/middleware"
 	"net/http"
 )
 
@@ -14,20 +15,23 @@ const StaticDir = "static"
 
 func BuildRouter(c *container.Container) {
 	c.Web.Use(
-		middleware.RemoveTrailingSlashWithConfig(
-			middleware.TrailingSlashConfig{
+		echomv.RemoveTrailingSlashWithConfig(
+			echomv.TrailingSlashConfig{
 				RedirectCode: http.StatusMovedPermanently,
 			}),
-		middleware.RequestID(),
-		middleware.Recover(),
-		middleware.Gzip(),
-		middleware.Logger(),
-		middleware.Static(StaticDir),
+		echomv.RequestID(),
+		echomv.Recover(),
+		echomv.Gzip(),
+		echomv.Logger(),
+		//middleware.Static(StaticDir),
 		session.Middleware(sessions.NewCookieStore([]byte(c.Config.App.EncryptionKey))),
-		middleware.CSRFWithConfig(middleware.CSRFConfig{
+		echomv.CSRFWithConfig(echomv.CSRFConfig{
 			TokenLookup: "form:csrf",
 		}),
 	)
+
+	c.Web.Group("", middleware.CacheControl(15552000)).
+		Static("/", StaticDir)
 
 	ctr := controllers.NewController(c)
 

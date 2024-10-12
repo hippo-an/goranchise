@@ -13,6 +13,7 @@ func (c *Contact) Get(ctx echo.Context) error {
 	p := NewPage(ctx)
 	p.Layout = "main"
 	p.Name = "contact"
+	p.Title = "Contact us"
 	p.Data = "This is contact page"
 
 	return c.RenderPage(ctx, p)
