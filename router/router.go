@@ -11,7 +11,10 @@ import (
 	"net/http"
 )
 
-const StaticDir = "static"
+const (
+	StaticDir = "static"
+	PublicDir = "public"
+)
 
 func BuildRouter(c *container.Container) {
 	c.Web.Use(
@@ -32,6 +35,8 @@ func BuildRouter(c *container.Container) {
 
 	c.Web.Group("", middleware.CacheControl(15552000)).
 		Static("/", StaticDir)
+	c.Web.Group("", middleware.CacheControl(15552000)).
+		Static("/", PublicDir)
 
 	ctr := controllers.NewController(c)
 
