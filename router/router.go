@@ -34,17 +34,17 @@ func BuildRouter(c *container.Container) {
 	)
 
 	c.Web.Group("", middleware.CacheControl(15552000)).
-		Static("/", StaticDir)
+		Static("/public", "public")
 	c.Web.Group("", middleware.CacheControl(15552000)).
-		Static("/", PublicDir)
+		Static("/images", "static/images")
 
 	ctr := controllers.NewController(c)
 
-	err := controllers.Error{
+	errorHandler := controllers.Error{
 		Controller: ctr,
 	}
 
-	c.Web.HTTPErrorHandler = err.Handler
+	c.Web.HTTPErrorHandler = errorHandler.Handler
 
 	navRoutes(c.Web, ctr)
 	userRoutes(c.Web, ctr)
@@ -61,5 +61,8 @@ func navRoutes(e *echo.Echo, ctr controllers.Controller) {
 	e.GET("/contact", contact.Get).Name = "contact"
 	e.POST("/contact", contact.Post).Name = "contact.post"
 }
+
 func userRoutes(e *echo.Echo, ctr controllers.Controller) {
+	login := controllers.Login{Controller: ctr}
+	e.GET("/user/login", login.Get).Name = "login"
 }
