@@ -1,12 +1,15 @@
 package controllers
 
-import "github.com/labstack/echo/v4"
+import (
+	"github.com/hippo-an/goranchise/msg"
+	"github.com/labstack/echo/v4"
+)
 
 type Login struct {
 	Controller
 }
 
-func (h *Login) Get(c echo.Context) error {
+func (l *Login) Get(c echo.Context) error {
 	p := NewPage(c)
 
 	p.Layout = "auth"
@@ -14,5 +17,10 @@ func (h *Login) Get(c echo.Context) error {
 	p.Title = "Login"
 	p.Data = "Login Page"
 
-	return h.RenderPage(c, p)
+	return l.RenderPage(c, p)
+}
+
+func (l *Login) Post(c echo.Context) error {
+	msg.Set(c, msg.Danger, "Invalid credentials. Please try again.")
+	return l.Get(c)
 }
