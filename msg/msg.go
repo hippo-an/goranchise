@@ -9,20 +9,36 @@ import (
 type Type string
 
 const (
-	Success Type = "success"
-	Info    Type = "info"
-	Warning Type = "warning"
-	Danger  Type = "danger"
+	TypeSuccess Type = "success"
+	TypeInfo    Type = "info"
+	TypeWarning Type = "warning"
+	TypeDanger  Type = "danger"
 )
+
+func Success(c echo.Context, message string) {
+	Set(c, TypeSuccess, message)
+}
+
+func Info(c echo.Context, message string) {
+	Set(c, TypeInfo, message)
+}
+
+func Warning(c echo.Context, message string) {
+	Set(c, TypeWarning, message)
+}
+
+func Danger(c echo.Context, message string) {
+	Set(c, TypeDanger, message)
+}
 
 func getSession(ctx echo.Context) *sessions.Session {
 	sess, _ := session.Get("msg", ctx)
 	return sess
 }
 
-func Set(ctx echo.Context, typ Type, value string) {
+func Set(ctx echo.Context, typ Type, message string) {
 	sess := getSession(ctx)
-	sess.AddFlash(value, string(typ))
+	sess.AddFlash(message, string(typ))
 	_ = sess.Save(ctx.Request(), ctx.Response())
 }
 
