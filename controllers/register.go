@@ -13,7 +13,7 @@ func (r *Register) Get(c echo.Context) error {
 	p := NewPage(c)
 
 	p.Layout = "auth"
-	p.Name = "register"
+	p.PageName = "register"
 	p.Title = "Register"
 	p.Data = "Register page"
 

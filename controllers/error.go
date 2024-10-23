@@ -26,7 +26,7 @@ func (e *Error) Handler(err error, ctx echo.Context) {
 	p.Layout = "main"
 	p.Title = http.StatusText(code)
 
-	p.Name = fmt.Sprintf("errors/%d", code)
+	p.PageName = fmt.Sprintf("errors/%d", code)
 	p.StatusCode = code
 	if err = e.RenderPage(ctx, p); err != nil {
 		ctx.Logger().Error(err)

@@ -9,14 +9,16 @@ import (
 type Env string
 
 const (
+	EnvTest  Env = "test"
 	EnvLocal Env = "local"
 	EnvDev   Env = "dev"
 	EnvProd  Env = "prod"
 )
 
 type Config struct {
-	Http HttpConfig
-	App  AppConfig
+	Http  HttpConfig
+	App   AppConfig
+	Cache CacheConfig
 }
 
 type HttpConfig struct {
@@ -31,6 +33,15 @@ type AppConfig struct {
 	Name          string
 	Environment   Env
 	EncryptionKey string
+}
+
+type CacheConfig struct {
+	Hostname string
+	Port     uint16
+	Password string
+	MaxAge   struct {
+		StaticFile int
+	}
 }
 
 func GetConfig() (Config, error) {

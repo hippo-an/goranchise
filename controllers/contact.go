@@ -12,7 +12,7 @@ type Contact struct {
 func (c *Contact) Get(ctx echo.Context) error {
 	p := NewPage(ctx)
 	p.Layout = "main"
-	p.Name = "contact"
+	p.PageName = "contact"
 	p.Title = "Contact us"
 	p.Data = "This is contact page"
 

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/hippo-an/goranchise/config"
 	"github.com/hippo-an/goranchise/container"
-	"github.com/hippo-an/goranchise/router"
+	"github.com/hippo-an/goranchise/controllers"
 	"github.com/labstack/gommon/log"
 	"net/http"
 	"os"
@@ -24,7 +24,7 @@ func main() {
 		c.Web.Logger.SetLevel(log.DEBUG)
 	}
 
-	router.BuildRouter(c)
+	controllers.BuildRouter(c)
 
 	go func() {
 		srv := http.Server{

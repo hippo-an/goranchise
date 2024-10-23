@@ -21,7 +21,7 @@ type Page struct {
 	Path       string
 	Data       interface{}
 	Layout     string
-	Name       string
+	PageName   string
 	IsHome     bool
 	IsAuth     bool
 	StatusCode int
@@ -31,6 +31,11 @@ type Page struct {
 	}
 	Pager pager.Pager
 	CSRF  string
+	Cache struct {
+		Enabled bool
+		MaxAge  int
+		Tags    []string
+	}
 }
 
 func NewPage(c echo.Context) Page {

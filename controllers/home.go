@@ -10,7 +10,7 @@ func (h *Home) Get(c echo.Context) error {
 	p := NewPage(c)
 
 	p.Layout = "main"
-	p.Name = "home"
+	p.PageName = "home"
 	p.Data = "Hello world"
 
 	return h.RenderPage(c, p)

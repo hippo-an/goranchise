@@ -13,7 +13,7 @@ func (l *Login) Get(c echo.Context) error {
 	p := NewPage(c)
 
 	p.Layout = "auth"
-	p.Name = "login"
+	p.PageName = "login"
 	p.Title = "Login"
 	p.Data = "Login Page"
 
