@@ -6,7 +6,7 @@ import (
 	"github.com/hippo-an/goranchise/middleware"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
-	echomv "github.com/labstack/echo/v4/middleware"
+	echomw "github.com/labstack/echo/v4/middleware"
 	"net/http"
 )
 
@@ -16,26 +16,31 @@ const (
 )
 
 func BuildRouter(c *container.Container) {
-	c.Web.Use(
-		echomv.RemoveTrailingSlashWithConfig(
-			echomv.TrailingSlashConfig{
-				RedirectCode: http.StatusMovedPermanently,
-			}),
-		echomv.RequestID(),
-		echomv.Recover(),
-		echomv.Gzip(),
-		echomv.Logger(),
-		//middleware.Static(StaticDir),
-		session.Middleware(sessions.NewCookieStore([]byte(c.Config.App.EncryptionKey))),
-		echomv.CSRFWithConfig(echomv.CSRFConfig{
-			TokenLookup: "form:csrf",
-		}),
-	)
 
 	c.Web.Group("", middleware.CacheControl(c.Config.Cache.MaxAge.StaticFile)).
 		Static("/public", PublicDir)
 	c.Web.Group("", middleware.CacheControl(c.Config.Cache.MaxAge.StaticFile)).
 		Static("/static", StaticDir)
+
+	c.Web.Use(
+		echomw.RemoveTrailingSlashWithConfig(
+			echomw.TrailingSlashConfig{
+				RedirectCode: http.StatusMovedPermanently,
+			}),
+		echomw.RequestID(),
+		echomw.Recover(),
+		echomw.Gzip(),
+		echomw.Logger(),
+		//middleware.Static(StaticDir),
+		echomw.TimeoutWithConfig(echomw.TimeoutConfig{
+			Timeout: c.Config.App.Timeout,
+		}),
+		middleware.PageCache(c.Cache),
+		session.Middleware(sessions.NewCookieStore([]byte(c.Config.App.EncryptionKey))),
+		echomw.CSRFWithConfig(echomw.CSRFConfig{
+			TokenLookup: "form:csrf",
+		}),
+	)
 
 	ctr := NewController(c)
 

@@ -3,9 +3,12 @@ package controllers
 import (
 	"bytes"
 	"fmt"
+	"github.com/eko/gocache/lib/v4/marshaler"
+	"github.com/eko/gocache/lib/v4/store"
 	"github.com/hippo-an/goranchise/config"
 	"github.com/hippo-an/goranchise/container"
 	"github.com/hippo-an/goranchise/funcmap"
+	"github.com/hippo-an/goranchise/middleware"
 	"github.com/labstack/echo/v4"
 	"html/template"
 	"net/http"
@@ -38,7 +41,7 @@ func NewController(c *container.Container) Controller {
 
 func (c *Controller) RenderPage(ctx echo.Context, p Page) error {
 	if p.PageName == "" {
-		ctx.Logger().Error("Page render failed due to missing name")
+		ctx.Logger().Error("page render failed due to missing name")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 	}
 
@@ -50,21 +53,70 @@ func (c *Controller) RenderPage(ctx echo.Context, p Page) error {
 		return err
 	}
 
+	buf, err := c.executeTemplate(ctx, p)
+
+	if err != nil {
+		return err
+	}
+
+	c.cachePage(ctx, p, buf)
+
+	for k, v := range p.Headers {
+		ctx.Response().Header().Set(k, v)
+	}
+
+	return ctx.HTMLBlob(p.StatusCode, buf.Bytes())
+}
+
+func (c *Controller) executeTemplate(ctx echo.Context, p Page) (*bytes.Buffer, error) {
 	tmpl, ok := templates.Load(p.PageName)
 
 	if !ok {
-		ctx.Logger().Error("Uncached page template requested")
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+		ctx.Logger().Error("uncached page template requested")
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 	}
 
 	buf := new(bytes.Buffer)
 	err := tmpl.(*template.Template).ExecuteTemplate(buf, p.Layout+TemplateExt, p)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return ctx.HTMLBlob(p.StatusCode, buf.Bytes())
+	return buf, nil
+}
+
+func (c *Controller) cachePage(ctx echo.Context, p Page, html *bytes.Buffer) {
+	if !p.Cache.Enabled {
+		return
+	}
+	if p.Cache.MaxAge == 0 {
+		p.Cache.MaxAge = c.Container.Config.Cache.MaxAge.Page
+	}
+
+	key := ctx.Request().URL.String()
+
+	cp := middleware.CachedPage{
+		URL:        key,
+		HTML:       html.Bytes(),
+		Headers:    p.Headers,
+		StatusCode: p.StatusCode,
+	}
+
+	err := marshaler.New(c.Container.Cache).Set(
+		ctx.Request().Context(),
+		key,
+		cp,
+		store.WithExpiration(p.Cache.MaxAge),
+		store.WithTags(p.Cache.Tags),
+	)
+
+	if err != nil {
+		ctx.Logger().Errorf("failed to cache page: %s", key)
+		ctx.Logger().Error(err)
+		return
+	}
+	ctx.Logger().Infof("cached page for: %s", key)
 
 }
 

@@ -33,6 +33,7 @@ type AppConfig struct {
 	Name          string
 	Environment   Env
 	EncryptionKey string
+	Timeout       time.Duration
 }
 
 type CacheConfig struct {
@@ -40,7 +41,8 @@ type CacheConfig struct {
 	Port     uint16
 	Password string
 	MaxAge   struct {
-		StaticFile int
+		StaticFile time.Duration
+		Page       time.Duration
 	}
 }
 

@@ -9,11 +9,12 @@ app:
   name: "Goranchise"
   environment: "local"
   encryptionKey: "?E(G+KbPeShVmYq3t6w9z$C&F)J@McQf"
+  timeout: "20s"
 
 cache:
   hostname: "localhost"
   port: 6379
   password:
   maxAge:
-    staticFile: 15552000
-    page: 86400
+    staticFile: "4380h"
+    page: "24h"
