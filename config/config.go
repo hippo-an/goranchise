@@ -9,9 +9,7 @@ import (
 type Env string
 
 const (
-	EnvTest  Env = "test"
 	EnvLocal Env = "local"
-	EnvDev   Env = "dev"
 	EnvProd  Env = "prod"
 )
 
