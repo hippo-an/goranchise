@@ -18,3 +18,10 @@ cache:
   maxAge:
     staticFile: "4380h"
     page: "24h"
+
+database:
+  hostname: "127.0.0.1"
+  port: 5432
+  user: "admin"
+  password: "admin"
+  database: "goranchise"

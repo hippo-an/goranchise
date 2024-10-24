@@ -16,9 +16,10 @@ const (
 )
 
 type Config struct {
-	Http  HttpConfig
-	App   AppConfig
-	Cache CacheConfig
+	Http     HttpConfig
+	App      AppConfig
+	Cache    CacheConfig
+	Database DatabaseConfig
 }
 
 type HttpConfig struct {
@@ -44,6 +45,14 @@ type CacheConfig struct {
 		StaticFile time.Duration
 		Page       time.Duration
 	}
+}
+
+type DatabaseConfig struct {
+	Hostname string
+	Port     uint16
+	User     string
+	Password string
+	Database string
 }
 
 func GetConfig() (Config, error) {

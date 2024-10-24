@@ -27,10 +27,12 @@ func BuildRouter(c *container.Container) {
 			echomw.TrailingSlashConfig{
 				RedirectCode: http.StatusMovedPermanently,
 			}),
+		echomw.Secure(),
 		echomw.RequestID(),
 		echomw.Recover(),
 		echomw.Gzip(),
 		echomw.Logger(),
+		middleware.LogRequestId(),
 		//middleware.Static(StaticDir),
 		echomw.TimeoutWithConfig(echomw.TimeoutConfig{
 			Timeout: c.Config.App.Timeout,
