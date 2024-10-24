@@ -31,7 +31,7 @@ func (l *Login) Post(c echo.Context) error {
 		return l.Get(c)
 	}
 
-	u, err := l.Container.Ent.User.
+	u, err := l.Container.ORM.User.
 		Query().
 		Where(user.Username(username)).
 		First(c.Request().Context())
@@ -46,5 +46,7 @@ func (l *Login) Post(c echo.Context) error {
 		}
 	}
 
-	return l.Get(c)
+	msg.Info(c, "You are now logged in.")
+
+	return l.Redirect(c, "home")
 }

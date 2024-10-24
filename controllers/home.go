@@ -12,6 +12,6 @@ func (h *Home) Get(c echo.Context) error {
 	p.Layout = "main"
 	p.PageName = "home"
 	p.Data = "Hello world"
-
+	p.IsHome = true
 	return h.RenderPage(c, p)
 }

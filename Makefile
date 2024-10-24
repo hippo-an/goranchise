@@ -31,3 +31,7 @@ ready:
 .PHONY: down
 down:
 	@docker compose down -v
+
+.PHONY: ent-install
+ent-install:
+	@go get entgo.io/ent/cmd/ent

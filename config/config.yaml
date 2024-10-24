@@ -15,7 +15,7 @@ cache:
   hostname: "localhost"
   port: 6379
   password:
-  maxAge:
+  expiration:
     staticFile: "4380h"
     page: "24h"
 

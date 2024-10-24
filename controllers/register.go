@@ -52,7 +52,7 @@ func (r *Register) Post(c echo.Context) error {
 		return fail("unable to hash password", err)
 	}
 
-	u, err := r.Container.Ent.User.
+	u, err := r.Container.ORM.User.
 		Create().
 		SetUsername(form.Username).
 		SetPassword(string(hashedPassword)).
@@ -60,6 +60,8 @@ func (r *Register) Post(c echo.Context) error {
 
 	if err != nil {
 		c.Logger().Error(err)
+		msg.Danger(c, "Check the username and password")
+		return r.Get(c)
 	} else {
 		c.Logger().Infof("user created: %s", u.Username)
 	}

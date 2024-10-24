@@ -20,16 +20,14 @@ type Container struct {
 	Cache    *cache.Cache[any]
 	Config   *config.Config
 	Database *sql.DB
-	Ent      *ent.Client
+	ORM      *ent.Client
 }
 
-func NewContainer() *Container {
-	var c Container
-
-	// web configuration
+func (c *Container) initWeb() {
 	c.Web = echo.New()
+}
 
-	// config configuration
+func (c *Container) initConfig() {
 	cfg, err := config.GetConfig()
 
 	if err != nil {
@@ -37,8 +35,9 @@ func NewContainer() *Container {
 	}
 
 	c.Config = &cfg
+}
 
-	// cache configuration
+func (c *Container) initCache() {
 	cacheClient := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", c.Config.Cache.Hostname, c.Config.Cache.Port),
 		Password: c.Config.Cache.Password,
@@ -50,8 +49,9 @@ func NewContainer() *Container {
 
 	cacheStore := redis_store.NewRedis(cacheClient)
 	c.Cache = cache.New[any](cacheStore)
+}
 
-	// database
+func (c *Container) initDatabase() {
 	addr := fmt.Sprintf(
 		"postgres://%s:%s@%s/%s",
 		c.Config.Database.User,
@@ -60,18 +60,28 @@ func NewContainer() *Container {
 		c.Config.Database.Database,
 	)
 
-	// ent
-	st, err := entsql.Open("pgx", addr)
+	driver, err := entsql.Open("pgx", addr)
 	if err != nil {
 		c.Web.Logger.Fatalf("failed to connect to database: %v", err)
 	}
 
-	c.Database = st.DB()
+	c.Database = driver.DB()
+}
 
+func (c *Container) initORM() {
 	drv := entsql.OpenDB(dialect.Postgres, c.Database)
-	c.Ent = ent.NewClient(ent.Driver(drv))
-	if err := c.Ent.Schema.Create(context.Background()); err != nil {
+	c.ORM = ent.NewClient(ent.Driver(drv))
+	if err := c.ORM.Schema.Create(context.Background()); err != nil {
 		c.Web.Logger.Fatalf("failed to create database schema: %v", err)
 	}
+}
+
+func NewContainer() *Container {
+	var c Container
+	c.initWeb()
+	c.initConfig()
+	c.initCache()
+	c.initDatabase()
+	c.initORM()
 	return &c
 }

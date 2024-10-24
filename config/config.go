@@ -38,10 +38,10 @@ type AppConfig struct {
 }
 
 type CacheConfig struct {
-	Hostname string
-	Port     uint16
-	Password string
-	MaxAge   struct {
+	Hostname   string
+	Port       uint16
+	Password   string
+	Expiration struct {
 		StaticFile time.Duration
 		Page       time.Duration
 	}
