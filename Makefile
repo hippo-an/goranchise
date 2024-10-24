@@ -16,8 +16,8 @@ air:
 gen-model:
 	@go run -mod=mod entgo.io/ent/cmd/ent new $(MODEL)
 
-.PHONY: gen-orm
-gen-orm:
+.PHONY: ent
+ent:
 	@go generate ./ent
 
 .PHONY: run

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/sessions"
 	"github.com/hippo-an/goranchise/container"
 	"github.com/hippo-an/goranchise/middleware"
@@ -14,6 +15,17 @@ const (
 	StaticDir = "static"
 	PublicDir = "public"
 )
+
+type Validator struct {
+	validator *validator.Validate
+}
+
+func (v *Validator) Validate(i interface{}) error {
+	if err := v.validator.Struct(i); err != nil {
+		return err
+	}
+	return nil
+}
 
 func BuildRouter(c *container.Container) {
 
@@ -43,6 +55,8 @@ func BuildRouter(c *container.Container) {
 			TokenLookup: "form:csrf",
 		}),
 	)
+
+	c.Web.Validator = &Validator{validator: validator.New()}
 
 	ctr := NewController(c)
 

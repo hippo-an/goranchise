@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"github.com/hippo-an/goranchise/ent/user"
 	"github.com/hippo-an/goranchise/msg"
 	"github.com/labstack/echo/v4"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Login struct {
@@ -21,6 +23,28 @@ func (l *Login) Get(c echo.Context) error {
 }
 
 func (l *Login) Post(c echo.Context) error {
-	msg.Danger(c, "Invalid credentials. Please try again.")
+	username := c.FormValue("username")
+	password := c.FormValue("password")
+
+	if username == "" || password == "" {
+		msg.Warning(c, "All fields are required to login")
+		return l.Get(c)
+	}
+
+	u, err := l.Container.Ent.User.
+		Query().
+		Where(user.Username(username)).
+		First(c.Request().Context())
+
+	if err != nil {
+		c.Logger().Errorf("error querying user during login: %v", err)
+		msg.Danger(c, "Check username and password")
+	} else {
+		err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+		if err != nil {
+			msg.Danger(c, "Invalid credentials. Please try again.")
+		}
+	}
+
 	return l.Get(c)
 }
