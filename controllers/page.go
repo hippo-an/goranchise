@@ -34,10 +34,11 @@ type Page struct {
 	CSRF    string
 	Headers map[string]string
 	Cache   struct {
-		Enabled bool
-		MaxAge  time.Duration
-		Tags    []string
+		Enabled    bool
+		Expiration time.Duration
+		Tags       []string
 	}
+	RequestId string
 }
 
 func NewPage(c echo.Context) Page {
@@ -48,6 +49,7 @@ func NewPage(c echo.Context) Page {
 		StatusCode: http.StatusOK,
 		Pager:      pager.NewPager(c, DefaultItemsPerPage),
 		Headers:    make(map[string]string),
+		RequestId:  c.Response().Header().Get(echo.HeaderXRequestID),
 	}
 
 	p.IsHome = p.Path == "/"

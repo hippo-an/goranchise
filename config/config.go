@@ -13,45 +13,45 @@ const (
 	EnvProd  Env = "prod"
 )
 
-type Config struct {
-	Http     HttpConfig
-	App      AppConfig
-	Cache    CacheConfig
-	Database DatabaseConfig
-}
-
-type HttpConfig struct {
-	Hostname     string
-	Port         uint16
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-	IdleTimeout  time.Duration
-}
-
-type AppConfig struct {
-	Name          string
-	Environment   Env
-	EncryptionKey string
-	Timeout       time.Duration
-}
-
-type CacheConfig struct {
-	Hostname   string
-	Port       uint16
-	Password   string
-	Expiration struct {
-		StaticFile time.Duration
-		Page       time.Duration
+type (
+	Config struct {
+		Http     HttpConfig
+		App      AppConfig
+		Cache    CacheConfig
+		Database DatabaseConfig
 	}
-}
 
-type DatabaseConfig struct {
-	Hostname string
-	Port     uint16
-	User     string
-	Password string
-	Database string
-}
+	HttpConfig struct {
+		Hostname     string
+		Port         uint16
+		ReadTimeout  time.Duration
+		WriteTimeout time.Duration
+		IdleTimeout  time.Duration
+	}
+	AppConfig struct {
+		Name          string
+		Environment   Env
+		EncryptionKey string
+		Timeout       time.Duration
+	}
+
+	CacheConfig struct {
+		Hostname   string
+		Port       uint16
+		Password   string
+		Expiration struct {
+			StaticFile time.Duration
+			Page       time.Duration
+		}
+	}
+	DatabaseConfig struct {
+		Hostname string
+		Port     uint16
+		User     string
+		Password string
+		Database string
+	}
+)
 
 func GetConfig() (Config, error) {
 	var c Config

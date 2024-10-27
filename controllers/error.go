@@ -12,6 +12,11 @@ type Error struct {
 }
 
 func (e *Error) Handler(err error, ctx echo.Context) {
+
+	if ctx.Response().Committed {
+		return
+	}
+
 	code := http.StatusInternalServerError
 	var he *echo.HTTPError
 	if errors.As(err, &he) {
@@ -24,6 +29,7 @@ func (e *Error) Handler(err error, ctx echo.Context) {
 	}
 	p := NewPage(ctx)
 	p.Layout = "main"
+	p.PageName = "error"
 	p.Title = http.StatusText(code)
 
 	p.PageName = fmt.Sprintf("errors/%d", code)

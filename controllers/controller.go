@@ -90,8 +90,8 @@ func (c *Controller) cachePage(ctx echo.Context, p Page, html *bytes.Buffer) {
 	if !p.Cache.Enabled {
 		return
 	}
-	if p.Cache.MaxAge == 0 {
-		p.Cache.MaxAge = c.Container.Config.Cache.MaxAge.Page
+	if p.Cache.Expiration == 0 {
+		p.Cache.Expiration = c.Container.Config.Cache.Expiration.Page
 	}
 
 	key := ctx.Request().URL.String()
@@ -107,7 +107,7 @@ func (c *Controller) cachePage(ctx echo.Context, p Page, html *bytes.Buffer) {
 		ctx.Request().Context(),
 		key,
 		cp,
-		store.WithExpiration(p.Cache.MaxAge),
+		store.WithExpiration(p.Cache.Expiration),
 		store.WithTags(p.Cache.Tags),
 	)
 
