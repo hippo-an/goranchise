@@ -1,9 +1,9 @@
 package controllers
 
 import (
+	"github.com/hippo-an/goranchise/auth"
 	"github.com/hippo-an/goranchise/msg"
 	"github.com/labstack/echo/v4"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type (
@@ -35,26 +35,24 @@ func (r *Register) Post(c echo.Context) error {
 		return r.Get(c)
 	}
 
-	form := new(RegisterForm)
-	if err := c.Bind(form); err != nil {
+	if err := c.Bind(&r.form); err != nil {
 		return fail("unable to parse form values", err)
 	}
-	r.form = *form
 
-	if err := c.Validate(form); err != nil {
+	if err := c.Validate(r.form); err != nil {
 		r.Container.Web.Logger.Errorf("Validation error: %s", err)
 		msg.Danger(c, "All fields are required.")
 		return r.Get(c)
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(form.Password), bcrypt.DefaultCost)
+	hashedPassword, err := auth.HashPassword(r.form.Password)
 	if err != nil {
 		return fail("unable to hash password", err)
 	}
 
 	u, err := r.Container.ORM.User.
 		Create().
-		SetUsername(form.Username).
+		SetUsername(r.form.Username).
 		SetPassword(string(hashedPassword)).
 		Save(c.Request().Context())
 
@@ -67,6 +65,12 @@ func (r *Register) Post(c echo.Context) error {
 	}
 
 	c.Logger().Infof("user created: %s", u.Username)
+
+	err = auth.Login(c, u.ID)
+	if err != nil {
+		// TODO
+	}
+
 	msg.Info(c, "Your account has been created. You are now logged in.")
 
 	return r.Redirect(c, "home")

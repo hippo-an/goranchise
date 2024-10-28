@@ -29,9 +29,9 @@ func (v *Validator) Validate(i interface{}) error {
 
 func BuildRouter(c *container.Container) {
 
-	c.Web.Group("", middleware.CacheControl(c.Config.Cache.MaxAge.StaticFile)).
+	c.Web.Group("", middleware.CacheControl(c.Config.Cache.Expiration.StaticFile)).
 		Static("/public", PublicDir)
-	c.Web.Group("", middleware.CacheControl(c.Config.Cache.MaxAge.StaticFile)).
+	c.Web.Group("", middleware.CacheControl(c.Config.Cache.Expiration.StaticFile)).
 		Static("/static", StaticDir)
 
 	c.Web.Use(
@@ -89,6 +89,9 @@ func userRoutes(e *echo.Echo, ctr Controller) {
 	{
 		userRoute.GET("/login", login.Get).Name = "login"
 		userRoute.POST("/login", login.Post).Name = "login.post"
+
+		logout := Logout{Controller: ctr}
+		userRoute.GET("/user/logout", logout.Get).Name = "logout"
 
 		userRoute.GET("/register", register.Get).Name = "register"
 		userRoute.POST("/register", register.Post).Name = "register.post"
