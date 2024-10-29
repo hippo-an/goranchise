@@ -4,10 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hippo-an/goranchise/config"
 	"github.com/hippo-an/goranchise/container"
 	"github.com/hippo-an/goranchise/controllers"
-	"github.com/labstack/gommon/log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,13 +14,6 @@ import (
 
 func main() {
 	c := container.NewContainer()
-
-	switch c.Config.App.Environment {
-	case config.EnvProd:
-		c.Web.Logger.SetLevel(log.WARN)
-	default:
-		c.Web.Logger.SetLevel(log.DEBUG)
-	}
 
 	controllers.BuildRouter(c)
 

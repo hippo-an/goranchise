@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/hippo-an/goranchise/auth"
 	"github.com/hippo-an/goranchise/msg"
 	"github.com/hippo-an/goranchise/pager"
 	"github.com/labstack/echo/v4"
@@ -57,6 +58,12 @@ func NewPage(c echo.Context) Page {
 	if csrf := c.Get(echomw.DefaultCSRFConfig.ContextKey); csrf != nil {
 		p.CSRF = csrf.(string)
 	}
+
+	// auth settings for page
+	if _, err := auth.GetUserID(c); err == nil {
+		p.IsAuth = true
+	}
+
 	return p
 }
 

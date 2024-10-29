@@ -54,6 +54,7 @@ func BuildRouter(c *container.Container) {
 		echomw.CSRFWithConfig(echomw.CSRFConfig{
 			TokenLookup: "form:csrf",
 		}),
+		middleware.LoadAuthenticatedUser(c.ORM),
 	)
 
 	c.Web.Validator = &Validator{validator: validator.New()}
@@ -85,16 +86,20 @@ func navRoutes(e *echo.Echo, ctr Controller) {
 func userRoutes(e *echo.Echo, ctr Controller) {
 	login := Login{Controller: ctr}
 	register := Register{Controller: ctr}
-	userRoute := e.Group("/user")
 	{
-		userRoute.GET("/login", login.Get).Name = "login"
-		userRoute.POST("/login", login.Post).Name = "login.post"
-
 		logout := Logout{Controller: ctr}
-		userRoute.GET("/user/logout", logout.Get).Name = "logout"
+		e.GET("/logout", logout.Get, middleware.RequireAuthentication()).
+			Name = "logout"
+	}
 
-		userRoute.GET("/register", register.Get).Name = "register"
-		userRoute.POST("/register", register.Post).Name = "register.post"
+	noAuth := e.Group("/user", middleware.RequireNoAuthentication())
+
+	{
+		noAuth.GET("/login", login.Get).Name = "login"
+		noAuth.POST("/login", login.Post).Name = "login.post"
+
+		noAuth.GET("/register", register.Get).Name = "register"
+		noAuth.POST("/register", register.Post).Name = "register.post"
 	}
 
 }

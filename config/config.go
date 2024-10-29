@@ -10,6 +10,7 @@ type Env string
 
 const (
 	EnvLocal Env = "local"
+	EnvTest  Env = "test"
 	EnvProd  Env = "prod"
 )
 
@@ -28,6 +29,7 @@ type (
 		WriteTimeout time.Duration
 		IdleTimeout  time.Duration
 	}
+
 	AppConfig struct {
 		Name          string
 		Environment   Env
@@ -44,12 +46,14 @@ type (
 			Page       time.Duration
 		}
 	}
+
 	DatabaseConfig struct {
-		Hostname string
-		Port     uint16
-		User     string
-		Password string
-		Database string
+		Hostname     string
+		Port         uint16
+		User         string
+		Password     string
+		Database     string
+		TestDatabase string
 	}
 )
 

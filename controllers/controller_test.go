@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/PuerkitoBio/goquery"
+	"github.com/hippo-an/goranchise/config"
 	"github.com/hippo-an/goranchise/container"
 	"github.com/labstack/gommon/log"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,13 @@ var (
 )
 
 func TestMain(m *testing.M) {
+
+	if err := os.Setenv("APP_ENVIRONMENT", string(config.EnvTest)); err != nil {
+		panic(err)
+	}
+
 	c = container.NewContainer()
+
 	BuildRouter(c)
 	c.Web.Logger.SetLevel(log.DEBUG)
 

@@ -12,6 +12,7 @@ import (
 	"github.com/hippo-an/goranchise/ent"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -23,15 +24,32 @@ type Container struct {
 	ORM      *ent.Client
 }
 
+func NewContainer() *Container {
+	c := new(Container)
+	c.initConfig()
+	c.initWeb()
+	c.initCache()
+	c.initDatabase()
+	c.initORM()
+	return c
+}
+
 func (c *Container) initWeb() {
 	c.Web = echo.New()
+
+	switch c.Config.App.Environment {
+	case config.EnvProd:
+		c.Web.Logger.SetLevel(log.WARN)
+	default:
+		c.Web.Logger.SetLevel(log.DEBUG)
+	}
 }
 
 func (c *Container) initConfig() {
 	cfg, err := config.GetConfig()
 
 	if err != nil {
-		c.Web.Logger.Fatalf("failed to load configuration: %v", err)
+		panic(fmt.Sprintf("failed to load configuration: %v", err))
 	}
 
 	c.Config = &cfg
@@ -43,45 +61,48 @@ func (c *Container) initCache() {
 		Password: c.Config.Cache.Password,
 	})
 
-	//if _, err = cacheClient.Ping(context.Background()).Result(); err != nil {
-	//	c.Web.Logger.Fatalf("failed to connect to cache server: %v", err)
-	//}
+	if _, err := cacheClient.Ping(context.Background()).Result(); err != nil {
+		panic(fmt.Sprintf("failed to connect to cache server: %v", err))
+	}
 
 	cacheStore := redis_store.NewRedis(cacheClient)
 	c.Cache = cache.New[any](cacheStore)
 }
 
 func (c *Container) initDatabase() {
-	addr := fmt.Sprintf(
-		"postgres://%s:%s@%s/%s",
-		c.Config.Database.User,
-		c.Config.Database.Password,
-		c.Config.Database.Hostname,
-		c.Config.Database.Database,
-	)
 
-	driver, err := entsql.Open("pgx", addr)
-	if err != nil {
-		c.Web.Logger.Fatalf("failed to connect to database: %v", err)
+	getAddr := func(dbName string) string {
+		return fmt.Sprintf("postgresql://%s:%s@%s/%s",
+			c.Config.Database.User,
+			c.Config.Database.Password,
+			c.Config.Database.Hostname,
+			dbName,
+		)
 	}
 
-	c.Database = driver.DB()
+	switch c.Config.App.Environment {
+	case config.EnvTest:
+		driver, err := entsql.Open("pgx", getAddr(c.Config.Database.TestDatabase))
+		if err != nil {
+			panic(fmt.Sprintf("failed to connect to database: %v", err))
+		}
+		c.Database = driver.DB()
+	case config.EnvLocal:
+		driver, err := entsql.Open("pgx", getAddr(c.Config.Database.Database))
+		if err != nil {
+			panic(fmt.Sprintf("failed to connect to database: %v", err))
+		}
+
+		c.Database = driver.DB()
+	case config.EnvProd:
+	default:
+	}
 }
 
 func (c *Container) initORM() {
 	drv := entsql.OpenDB(dialect.Postgres, c.Database)
 	c.ORM = ent.NewClient(ent.Driver(drv))
 	if err := c.ORM.Schema.Create(context.Background()); err != nil {
-		c.Web.Logger.Fatalf("failed to create database schema: %v", err)
+		panic(fmt.Sprintf("failed to create database schema: %v", err))
 	}
-}
-
-func NewContainer() *Container {
-	var c Container
-	c.initWeb()
-	c.initConfig()
-	c.initCache()
-	c.initDatabase()
-	c.initORM()
-	return &c
 }

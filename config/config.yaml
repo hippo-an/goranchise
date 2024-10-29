@@ -25,3 +25,4 @@ database:
   user: "admin"
   password: "admin"
   database: "goranchise"
+  testDatabase: "goranchise_test"

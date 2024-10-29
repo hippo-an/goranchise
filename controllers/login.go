@@ -1,15 +1,24 @@
 package controllers
 
 import (
+	"fmt"
+	"github.com/hippo-an/goranchise/auth"
+	"github.com/hippo-an/goranchise/ent"
 	"github.com/hippo-an/goranchise/ent/user"
 	"github.com/hippo-an/goranchise/msg"
 	"github.com/labstack/echo/v4"
-	"golang.org/x/crypto/bcrypt"
 )
 
-type Login struct {
-	Controller
-}
+type (
+	Login struct {
+		Controller
+		form LoginForm
+	}
+	LoginForm struct {
+		Username string `form:"username" validate:"required"`
+		Password string `form:"password" validate:"required"`
+	}
+)
 
 func (l *Login) Get(c echo.Context) error {
 	p := NewPage(c)
@@ -17,36 +26,52 @@ func (l *Login) Get(c echo.Context) error {
 	p.Layout = "auth"
 	p.PageName = "login"
 	p.Title = "Login"
-	p.Data = "Login Page"
+	p.Data = l.form
 
 	return l.RenderPage(c, p)
 }
 
 func (l *Login) Post(c echo.Context) error {
-	username := c.FormValue("username")
-	password := c.FormValue("password")
+	fail := func(message string, err error) error {
+		c.Logger().Errorf("%s: %v", message, err)
+		msg.Danger(c, "An error occurred. Please try again.")
+		return l.Get(c)
+	}
+	if err := c.Bind(&l.form); err != nil {
+		return fail("unable to parse login form", err)
+	}
 
-	if username == "" || password == "" {
-		msg.Warning(c, "All fields are required to login")
+	if err := c.Validate(l.form); err != nil {
+		msg.Danger(c, "All fields are required.")
 		return l.Get(c)
 	}
 
 	u, err := l.Container.ORM.User.
 		Query().
-		Where(user.Username(username)).
+		Where(user.Username(l.form.Username)).
 		First(c.Request().Context())
 
 	if err != nil {
-		c.Logger().Errorf("error querying user during login: %v", err)
-		msg.Danger(c, "Check username and password")
-	} else {
-		err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
-		if err != nil {
-			msg.Danger(c, "Invalid credentials. Please try again.")
+		switch err.(type) {
+		case *ent.NotFoundError:
+			msg.Danger(c, "Check username and password")
+			return l.Get(c)
+		default:
+			return fail("error querying user during login", err)
 		}
 	}
 
-	msg.Info(c, "You are now logged in.")
+	err = auth.CheckPassword(l.form.Password, u.Password)
+	if err != nil {
+		msg.Danger(c, "Invalid credentials. Please try again.")
+		return l.Get(c)
+	}
 
+	err = auth.Login(c, u.ID)
+	if err != nil {
+		return fail("unable to log in user", err)
+	}
+
+	msg.Success(c, fmt.Sprintf("Welcome back, %s. You are now logged in.", u.Username))
 	return l.Redirect(c, "home")
 }
