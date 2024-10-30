@@ -1,14 +1,15 @@
-package controllers
+package handlers
 
 import (
 	"errors"
 	"fmt"
+	"github.com/hippo-an/goranchise/controller"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
 
 type Error struct {
-	Controller
+	controller.Controller
 }
 
 func (e *Error) Handler(err error, ctx echo.Context) {
@@ -27,7 +28,7 @@ func (e *Error) Handler(err error, ctx echo.Context) {
 	} else {
 		ctx.Logger().Info(err)
 	}
-	p := NewPage(ctx)
+	p := controller.NewPage(ctx)
 	p.Layout = "main"
 	p.PageName = "error"
 	p.Title = http.StatusText(code)

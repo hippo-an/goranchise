@@ -1,9 +1,10 @@
-package controllers
+package handlers
 
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/sessions"
 	"github.com/hippo-an/goranchise/container"
+	"github.com/hippo-an/goranchise/controller"
 	"github.com/hippo-an/goranchise/middleware"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -59,7 +60,7 @@ func BuildRouter(c *container.Container) {
 
 	c.Web.Validator = &Validator{validator: validator.New()}
 
-	ctr := NewController(c)
+	ctr := controller.NewController(c)
 
 	errorHandler := Error{
 		Controller: ctr,
@@ -71,7 +72,7 @@ func BuildRouter(c *container.Container) {
 	userRoutes(c.Web, ctr)
 }
 
-func navRoutes(e *echo.Echo, ctr Controller) {
+func navRoutes(e *echo.Echo, ctr controller.Controller) {
 	home := Home{Controller: ctr}
 	e.GET("/", home.Get).Name = "home"
 
@@ -83,7 +84,7 @@ func navRoutes(e *echo.Echo, ctr Controller) {
 	e.POST("/contact", contact.Post).Name = "contact.post"
 }
 
-func userRoutes(e *echo.Echo, ctr Controller) {
+func userRoutes(e *echo.Echo, ctr controller.Controller) {
 	login := Login{Controller: ctr}
 	register := Register{Controller: ctr}
 	{

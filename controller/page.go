@@ -1,4 +1,4 @@
-package controllers
+package controller
 
 import (
 	"github.com/hippo-an/goranchise/auth"

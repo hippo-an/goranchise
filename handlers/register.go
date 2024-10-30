@@ -1,24 +1,25 @@
-package controllers
+package handlers
 
 import (
 	"github.com/hippo-an/goranchise/auth"
+	"github.com/hippo-an/goranchise/controller"
 	"github.com/hippo-an/goranchise/msg"
 	"github.com/labstack/echo/v4"
 )
 
 type (
 	Register struct {
-		Controller
+		controller.Controller
 		form RegisterForm
 	}
 	RegisterForm struct {
-		Username string `form:"username" validate:"required"`
-		Password string `form:"password" validate:"required"`
+		Email    string `form:"email" validate:"required,email" label:"Email"`
+		Password string `form:"password" validate:"required" label:"Password"`
 	}
 )
 
 func (r *Register) Get(c echo.Context) error {
-	p := NewPage(c)
+	p := controller.NewPage(c)
 
 	p.Layout = "auth"
 	p.PageName = "register"
@@ -52,19 +53,19 @@ func (r *Register) Post(c echo.Context) error {
 
 	u, err := r.Container.ORM.User.
 		Create().
-		SetUsername(r.form.Username).
-		SetPassword(string(hashedPassword)).
+		SetEmail(r.form.Email).
+		SetPassword(hashedPassword).
 		Save(c.Request().Context())
 
 	if err != nil {
 		c.Logger().Error(err)
-		msg.Danger(c, "Check the username and password")
+		msg.Danger(c, "Check the email and password")
 		return r.Get(c)
 	} else {
-		c.Logger().Infof("user created: %s", u.Username)
+		c.Logger().Infof("user created: %s", u.Email)
 	}
 
-	c.Logger().Infof("user created: %s", u.Username)
+	c.Logger().Infof("user created: %s", u.Email)
 
 	err = auth.Login(c, u.ID)
 	if err != nil {

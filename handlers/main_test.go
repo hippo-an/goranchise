@@ -1,4 +1,4 @@
-package controllers
+package handlers
 
 import (
 	"github.com/PuerkitoBio/goquery"
@@ -21,7 +21,8 @@ var (
 
 func TestMain(m *testing.M) {
 
-	if err := os.Setenv("APP_ENVIRONMENT", string(config.EnvTest)); err != nil {
+	config.SwitchEnvironment(config.EnvironmentTest)
+	if err := os.Setenv("APP_ENVIRONMENT", string(config.EnvironmentTest)); err != nil {
 		panic(err)
 	}
 
@@ -32,9 +33,9 @@ func TestMain(m *testing.M) {
 
 	srv = httptest.NewServer(c.Web)
 
-	exitVal := m.Run()
+	exitCode := m.Run()
 	srv.Close()
-	os.Exit(exitVal)
+	os.Exit(exitCode)
 }
 
 type httpRequest struct {

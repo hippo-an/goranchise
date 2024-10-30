@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/hippo-an/goranchise/container"
-	"github.com/hippo-an/goranchise/controllers"
+	"github.com/hippo-an/goranchise/handlers"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,7 +15,7 @@ import (
 func main() {
 	c := container.NewContainer()
 
-	controllers.BuildRouter(c)
+	handlers.BuildRouter(c)
 
 	go func() {
 		srv := http.Server{

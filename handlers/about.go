@@ -1,15 +1,16 @@
-package controllers
+package handlers
 
 import (
+	"github.com/hippo-an/goranchise/controller"
 	"github.com/labstack/echo/v4"
 )
 
 type About struct {
-	Controller
+	controller.Controller
 }
 
 func (a *About) Get(ctx echo.Context) error {
-	p := NewPage(ctx)
+	p := controller.NewPage(ctx)
 	p.Layout = "main"
 	p.PageName = "about"
 	p.Title = "About"

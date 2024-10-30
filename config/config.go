@@ -2,16 +2,17 @@ package config
 
 import (
 	"github.com/spf13/viper"
+	"os"
 	"strings"
 	"time"
 )
 
-type Env string
+type Environment string
 
 const (
-	EnvLocal Env = "local"
-	EnvTest  Env = "test"
-	EnvProd  Env = "prod"
+	EnvironmentLocal Environment = "local"
+	EnvironmentTest  Environment = "test"
+	EnvironmentProd  Environment = "prod"
 )
 
 type (
@@ -20,6 +21,7 @@ type (
 		App      AppConfig
 		Cache    CacheConfig
 		Database DatabaseConfig
+		Mail     MailConfig
 	}
 
 	HttpConfig struct {
@@ -32,7 +34,7 @@ type (
 
 	AppConfig struct {
 		Name          string
-		Environment   Env
+		Environment   Environment
 		EncryptionKey string
 		Timeout       time.Duration
 	}
@@ -54,6 +56,14 @@ type (
 		Password     string
 		Database     string
 		TestDatabase string
+	}
+
+	MailConfig struct {
+		Hostname    string
+		Port        uint16
+		User        string
+		Password    string
+		FromAddress string
 	}
 )
 
@@ -80,4 +90,10 @@ func GetConfig() (Config, error) {
 	}
 
 	return c, nil
+}
+
+func SwitchEnvironment(env Environment) {
+	if err := os.Setenv("APP_ENVIRONMENT", string(env)); err != nil {
+		panic(err)
+	}
 }

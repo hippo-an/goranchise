@@ -1,8 +1,9 @@
-package controllers
+package handlers
 
 import (
 	"fmt"
 	"github.com/hippo-an/goranchise/auth"
+	"github.com/hippo-an/goranchise/controller"
 	"github.com/hippo-an/goranchise/ent"
 	"github.com/hippo-an/goranchise/ent/user"
 	"github.com/hippo-an/goranchise/msg"
@@ -11,17 +12,17 @@ import (
 
 type (
 	Login struct {
-		Controller
+		controller.Controller
 		form LoginForm
 	}
 	LoginForm struct {
-		Username string `form:"username" validate:"required"`
-		Password string `form:"password" validate:"required"`
+		Email    string `form:"email" validate:"required,email" label:"Email"`
+		Password string `form:"password" validate:"required" label:"Password"`
 	}
 )
 
 func (l *Login) Get(c echo.Context) error {
-	p := NewPage(c)
+	p := controller.NewPage(c)
 
 	p.Layout = "auth"
 	p.PageName = "login"
@@ -42,19 +43,19 @@ func (l *Login) Post(c echo.Context) error {
 	}
 
 	if err := c.Validate(l.form); err != nil {
-		msg.Danger(c, "All fields are required.")
+		l.SetValidationErrorMessage(c, err, l.form)
 		return l.Get(c)
 	}
 
 	u, err := l.Container.ORM.User.
 		Query().
-		Where(user.Username(l.form.Username)).
+		Where(user.Email(l.form.Email)).
 		First(c.Request().Context())
 
 	if err != nil {
 		switch err.(type) {
 		case *ent.NotFoundError:
-			msg.Danger(c, "Check username and password")
+			msg.Danger(c, "Check email and password")
 			return l.Get(c)
 		default:
 			return fail("error querying user during login", err)
@@ -72,6 +73,6 @@ func (l *Login) Post(c echo.Context) error {
 		return fail("unable to log in user", err)
 	}
 
-	msg.Success(c, fmt.Sprintf("Welcome back, %s. You are now logged in.", u.Username))
+	msg.Success(c, fmt.Sprintf("Welcome back, %s. You are now logged in.", u.Email))
 	return l.Redirect(c, "home")
 }

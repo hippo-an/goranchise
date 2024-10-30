@@ -26,3 +26,10 @@ database:
   password: "admin"
   database: "goranchise"
   testDatabase: "goranchise_test"
+
+mail:
+  hostname: localhost
+  port: 25
+  user: admin
+  password: admin
+  fromAddress: admin@localhost

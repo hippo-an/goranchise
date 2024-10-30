@@ -1,13 +1,14 @@
-package controllers
+package handlers
 
 import (
 	"github.com/hippo-an/goranchise/auth"
+	"github.com/hippo-an/goranchise/controller"
 	"github.com/hippo-an/goranchise/msg"
 	"github.com/labstack/echo/v4"
 )
 
 type Logout struct {
-	Controller
+	controller.Controller
 }
 
 func (l *Logout) Get(c echo.Context) error {

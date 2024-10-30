@@ -1,25 +1,28 @@
-package controllers
+package controller
 
 import (
 	"bytes"
 	"fmt"
 	"github.com/eko/gocache/lib/v4/marshaler"
 	"github.com/eko/gocache/lib/v4/store"
+	"github.com/go-playground/validator/v10"
 	"github.com/hippo-an/goranchise/config"
 	"github.com/hippo-an/goranchise/container"
 	"github.com/hippo-an/goranchise/funcmap"
 	"github.com/hippo-an/goranchise/middleware"
+	"github.com/hippo-an/goranchise/msg"
 	"github.com/labstack/echo/v4"
 	"html/template"
 	"net/http"
 	"path"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"sync"
 )
 
 const (
-	TemplateDir = "views"
+	TemplateDir = "templates"
 	TemplateExt = ".tmpl"
 )
 
@@ -121,7 +124,7 @@ func (c *Controller) cachePage(ctx echo.Context, p Page, html *bytes.Buffer) {
 }
 
 func (c *Controller) parsePageTemplate(p Page) error {
-	if _, ok := templates.Load(p.PageName); !ok || c.Container.Config.App.Environment == config.EnvLocal {
+	if _, ok := templates.Load(p.PageName); !ok || c.Container.Config.App.Environment == config.EnvironmentLocal {
 		parsed, err := template.New(p.Layout+TemplateExt).
 			Funcs(funcMap).
 			ParseFiles(
@@ -155,4 +158,25 @@ func getTemplatesDirectoryPath() string {
 	_, b, _, _ := runtime.Caller(0)
 	d := path.Join(path.Dir(b))
 	return filepath.Join(filepath.Dir(d), TemplateDir)
+}
+
+func (c *Controller) SetValidationErrorMessage(ctx echo.Context, err error, data interface{}) {
+	for _, ve := range err.(validator.ValidationErrors) {
+		var message string
+		label := ve.StructField()
+		if field, ok := reflect.TypeOf(data).FieldByName(ve.Field()); ok {
+			if labelTag := field.Tag.Get("label"); labelTag != "" {
+				label = labelTag
+			}
+		}
+
+		switch ve.Tag() {
+		case "required":
+			message = "%s is required."
+		default:
+			message = "%s is not a valid value."
+		}
+
+		msg.Danger(ctx, fmt.Sprintf(message, "<strong>"+label+"</strong>"))
+	}
 }
