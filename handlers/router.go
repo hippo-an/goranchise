@@ -55,7 +55,7 @@ func BuildRouter(c *container.Container) {
 		echomw.CSRFWithConfig(echomw.CSRFConfig{
 			TokenLookup: "form:csrf",
 		}),
-		middleware.LoadAuthenticatedUser(c.ORM),
+		middleware.LoadAuthenticatedUser(c.Auth),
 	)
 
 	c.Web.Validator = &Validator{validator: validator.New()}

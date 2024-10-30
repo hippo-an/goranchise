@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/hippo-an/goranchise/auth"
 	"github.com/hippo-an/goranchise/context"
 	"github.com/hippo-an/goranchise/controller"
 	"github.com/hippo-an/goranchise/ent"
@@ -68,13 +67,13 @@ func (l *Login) Post(c echo.Context) error {
 		}
 	}
 
-	err = auth.CheckPassword(form.Password, u.Password)
+	err = l.Container.Auth.CheckPassword(form.Password, u.Password)
 	if err != nil {
 		msg.Danger(c, "Invalid credentials. Please try again.")
 		return l.Get(c)
 	}
 
-	err = auth.Login(c, u.ID)
+	err = l.Container.Auth.Login(c, u.ID)
 	if err != nil {
 		return fail("unable to log in user", err)
 	}

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/eko/gocache/lib/v4/cache"
 	redis_store "github.com/eko/gocache/store/redis/v4"
+	"github.com/hippo-an/goranchise/auth"
 	"github.com/hippo-an/goranchise/config"
 	"github.com/hippo-an/goranchise/ent"
 	"github.com/hippo-an/goranchise/mail"
@@ -24,6 +25,7 @@ type Container struct {
 	Database *sql.DB
 	ORM      *ent.Client
 	Mail     *mail.Client
+	Auth     *auth.Client
 }
 
 func NewContainer() *Container {
@@ -33,6 +35,8 @@ func NewContainer() *Container {
 	c.initCache()
 	c.initDatabase()
 	c.initORM()
+	c.initMail()
+	c.initAuth()
 	return c
 }
 
@@ -110,4 +114,8 @@ func (c *Container) initORM() {
 
 func (c *Container) initMail() {
 	c.Mail = mail.NewClient(c.Config)
+}
+
+func (c *Container) initAuth() {
+	c.Auth = auth.NewClient(c.Config, c.ORM)
 }

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"github.com/hippo-an/goranchise/auth"
 	"github.com/hippo-an/goranchise/context"
 	"github.com/hippo-an/goranchise/controller"
 	"github.com/hippo-an/goranchise/msg"
@@ -53,7 +52,7 @@ func (r *Register) Post(c echo.Context) error {
 		return r.Get(c)
 	}
 
-	hashedPassword, err := auth.HashPassword(form.Password)
+	hashedPassword, err := r.Container.Auth.HashPassword(form.Password)
 	if err != nil {
 		return fail("unable to hash password", err)
 	}
@@ -72,7 +71,7 @@ func (r *Register) Post(c echo.Context) error {
 	}
 	c.Logger().Infof("user created: %s", u.Email)
 
-	err = auth.Login(c, u.ID)
+	err = r.Container.Auth.Login(c, u.ID)
 	if err != nil {
 		c.Logger().Errorf("unable to log in: %v", err)
 		msg.Info(c, "Your account has been created.")

@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/hippo-an/goranchise/auth"
+	"github.com/hippo-an/goranchise/context"
 	"github.com/hippo-an/goranchise/msg"
 	"github.com/hippo-an/goranchise/pager"
 	"github.com/labstack/echo/v4"
@@ -60,7 +60,7 @@ func NewPage(c echo.Context) Page {
 	}
 
 	// auth settings for page
-	if _, err := auth.GetUserID(c); err == nil {
+	if u := c.Get(context.AuthenticatedUserKey); u != nil {
 		p.IsAuth = true
 	}
 

@@ -164,9 +164,17 @@ func (c *Controller) SetValidationErrorMessages(ctx echo.Context, err error, dat
 	for _, ve := range err.(validator.ValidationErrors) {
 		var message string
 		label := ve.StructField()
-		if field, ok := reflect.TypeOf(data).FieldByName(ve.Field()); ok {
-			if labelTag := field.Tag.Get("label"); labelTag != "" {
-				label = labelTag
+		ty := reflect.TypeOf(data)
+
+		if ty.Kind() == reflect.Ptr {
+			ty = ty.Elem()
+		}
+
+		if ty.Kind() == reflect.Struct {
+			if field, ok := ty.FieldByName(ve.Field()); ok {
+				if labelTag := field.Tag.Get("label"); labelTag != "" {
+					label = labelTag
+				}
 			}
 		}
 

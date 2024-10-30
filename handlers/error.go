@@ -13,7 +13,6 @@ type Error struct {
 }
 
 func (e *Error) Handler(err error, ctx echo.Context) {
-
 	if ctx.Response().Committed {
 		return
 	}
@@ -35,6 +34,7 @@ func (e *Error) Handler(err error, ctx echo.Context) {
 
 	p.PageName = fmt.Sprintf("errors/%d", code)
 	p.StatusCode = code
+	p.Data = err.Error()
 	if err = e.RenderPage(ctx, p); err != nil {
 		ctx.Logger().Error(err)
 	}
