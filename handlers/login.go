@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"github.com/hippo-an/goranchise/auth"
+	"github.com/hippo-an/goranchise/context"
 	"github.com/hippo-an/goranchise/controller"
 	"github.com/hippo-an/goranchise/ent"
 	"github.com/hippo-an/goranchise/ent/user"
@@ -27,8 +28,10 @@ func (l *Login) Get(c echo.Context) error {
 	p.Layout = "auth"
 	p.PageName = "login"
 	p.Title = "Login"
-	p.Data = l.form
-
+	p.Data = LoginForm{}
+	if form := c.Get(context.FormKey); form != nil {
+		p.Data = form.(LoginForm)
+	}
 	return l.RenderPage(c, p)
 }
 
@@ -38,18 +41,21 @@ func (l *Login) Post(c echo.Context) error {
 		msg.Danger(c, "An error occurred. Please try again.")
 		return l.Get(c)
 	}
-	if err := c.Bind(&l.form); err != nil {
+
+	form := new(LoginForm)
+	if err := c.Bind(form); err != nil {
 		return fail("unable to parse login form", err)
 	}
+	c.Set(context.FormKey, *form)
 
-	if err := c.Validate(l.form); err != nil {
-		l.SetValidationErrorMessage(c, err, l.form)
+	if err := c.Validate(form); err != nil {
+		l.SetValidationErrorMessages(c, err, form)
 		return l.Get(c)
 	}
 
 	u, err := l.Container.ORM.User.
 		Query().
-		Where(user.Email(l.form.Email)).
+		Where(user.Email(form.Email)).
 		First(c.Request().Context())
 
 	if err != nil {
@@ -62,7 +68,7 @@ func (l *Login) Post(c echo.Context) error {
 		}
 	}
 
-	err = auth.CheckPassword(l.form.Password, u.Password)
+	err = auth.CheckPassword(form.Password, u.Password)
 	if err != nil {
 		msg.Danger(c, "Invalid credentials. Please try again.")
 		return l.Get(c)

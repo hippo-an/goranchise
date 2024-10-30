@@ -85,8 +85,6 @@ func navRoutes(e *echo.Echo, ctr controller.Controller) {
 }
 
 func userRoutes(e *echo.Echo, ctr controller.Controller) {
-	login := Login{Controller: ctr}
-	register := Register{Controller: ctr}
 	{
 		logout := Logout{Controller: ctr}
 		e.GET("/logout", logout.Get, middleware.RequireAuthentication()).
@@ -94,13 +92,18 @@ func userRoutes(e *echo.Echo, ctr controller.Controller) {
 	}
 
 	noAuth := e.Group("/user", middleware.RequireNoAuthentication())
-
 	{
+		login := Login{Controller: ctr}
 		noAuth.GET("/login", login.Get).Name = "login"
 		noAuth.POST("/login", login.Post).Name = "login.post"
 
+		register := Register{Controller: ctr}
 		noAuth.GET("/register", register.Get).Name = "register"
 		noAuth.POST("/register", register.Post).Name = "register.post"
+
+		forgot := ForgotPassword{Controller: ctr}
+		noAuth.GET("/password", forgot.Get).Name = "forgot_password"
+		noAuth.POST("/password", forgot.Post).Name = "forgot_password.post"
 	}
 
 }

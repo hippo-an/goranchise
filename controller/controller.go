@@ -160,7 +160,7 @@ func getTemplatesDirectoryPath() string {
 	return filepath.Join(filepath.Dir(d), TemplateDir)
 }
 
-func (c *Controller) SetValidationErrorMessage(ctx echo.Context, err error, data interface{}) {
+func (c *Controller) SetValidationErrorMessages(ctx echo.Context, err error, data interface{}) {
 	for _, ve := range err.(validator.ValidationErrors) {
 		var message string
 		label := ve.StructField()

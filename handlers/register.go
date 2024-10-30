@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/hippo-an/goranchise/auth"
+	"github.com/hippo-an/goranchise/context"
 	"github.com/hippo-an/goranchise/controller"
 	"github.com/hippo-an/goranchise/msg"
 	"github.com/labstack/echo/v4"
@@ -13,8 +14,10 @@ type (
 		form RegisterForm
 	}
 	RegisterForm struct {
-		Email    string `form:"email" validate:"required,email" label:"Email"`
-		Password string `form:"password" validate:"required" label:"Password"`
+		Name            string `form:"name" validate:"required" label:"Name"`
+		Email           string `form:"email" validate:"required,email" label:"Email"`
+		Password        string `form:"password" validate:"required" label:"Password"`
+		ConfirmPassword string `form:"confirm-password" validate:"required,eqfield=Password" label:"Confirm password"`
 	}
 )
 
@@ -24,7 +27,10 @@ func (r *Register) Get(c echo.Context) error {
 	p.Layout = "auth"
 	p.PageName = "register"
 	p.Title = "Register"
-	p.Data = r.form
+	p.Data = RegisterForm{}
+	if form := c.Get(context.FormKey); form != nil {
+		p.Data = form.(RegisterForm)
+	}
 
 	return r.RenderPage(c, p)
 }
@@ -35,25 +41,27 @@ func (r *Register) Post(c echo.Context) error {
 		msg.Danger(c, "An error occurred. Please try again.")
 		return r.Get(c)
 	}
-
-	if err := c.Bind(&r.form); err != nil {
+	form := new(RegisterForm)
+	if err := c.Bind(form); err != nil {
 		return fail("unable to parse form values", err)
 	}
 
-	if err := c.Validate(r.form); err != nil {
-		r.Container.Web.Logger.Errorf("Validation error: %s", err)
-		msg.Danger(c, "All fields are required.")
+	c.Set(context.FormKey, *form)
+
+	if err := c.Validate(form); err != nil {
+		r.SetValidationErrorMessages(c, err, form)
 		return r.Get(c)
 	}
 
-	hashedPassword, err := auth.HashPassword(r.form.Password)
+	hashedPassword, err := auth.HashPassword(form.Password)
 	if err != nil {
 		return fail("unable to hash password", err)
 	}
 
 	u, err := r.Container.ORM.User.
 		Create().
-		SetEmail(r.form.Email).
+		SetName(form.Name).
+		SetEmail(form.Email).
 		SetPassword(hashedPassword).
 		Save(c.Request().Context())
 
@@ -61,15 +69,14 @@ func (r *Register) Post(c echo.Context) error {
 		c.Logger().Error(err)
 		msg.Danger(c, "Check the email and password")
 		return r.Get(c)
-	} else {
-		c.Logger().Infof("user created: %s", u.Email)
 	}
-
 	c.Logger().Infof("user created: %s", u.Email)
 
 	err = auth.Login(c, u.ID)
 	if err != nil {
-		// TODO
+		c.Logger().Errorf("unable to log in: %v", err)
+		msg.Info(c, "Your account has been created.")
+		return r.Redirect(c, "login")
 	}
 
 	msg.Info(c, "Your account has been created. You are now logged in.")

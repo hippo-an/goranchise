@@ -33,10 +33,11 @@ type (
 	}
 
 	AppConfig struct {
-		Name          string
-		Environment   Environment
-		EncryptionKey string
-		Timeout       time.Duration
+		Name                    string
+		Environment             Environment
+		EncryptionKey           string
+		Timeout                 time.Duration
+		PasswordTokenExpiration time.Duration
 	}
 
 	CacheConfig struct {
