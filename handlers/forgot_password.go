@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/hippo-an/goranchise/context"
 	"github.com/hippo-an/goranchise/controller"
 	"github.com/hippo-an/goranchise/ent"
@@ -40,6 +41,7 @@ func (f *ForgotPassword) Post(c echo.Context) error {
 	}
 
 	succeed := func() error {
+		c.Set(context.FormKey, nil)
 		msg.Success(c, "An email containing a link to reset your password will be sent to this address if it exists in our system.")
 		return f.Get(c)
 	}
@@ -68,9 +70,18 @@ func (f *ForgotPassword) Post(c echo.Context) error {
 			return fail("error querying user during forgot password", err)
 		}
 	}
-	// TODO: generate and email a token
-	if u != nil {
+
+	token, _, err := f.Container.Auth.GeneratePasswordResetToken(c, u.ID)
+	if err != nil {
+		return fail("error generating password reset token", err)
+	}
+	c.Logger().Infof("generated password reset token for user %d", u.ID)
+
+	// Email the user
+	err = f.Container.Mail.SendMail(c, u.Email, fmt.Sprintf("Go here to reset your password: %s", token))
+	if err != nil {
+		return fail("error sending password reset email", err)
 	}
 
-	return f.Redirect(c, "home")
+	return succeed()
 }
