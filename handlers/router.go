@@ -7,7 +7,6 @@ import (
 	"github.com/hippo-an/goranchise/controller"
 	"github.com/hippo-an/goranchise/middleware"
 	"github.com/labstack/echo-contrib/session"
-	"github.com/labstack/echo/v4"
 	echomw "github.com/labstack/echo/v4/middleware"
 	"net/http"
 )
@@ -68,30 +67,30 @@ func BuildRouter(c *container.Container) {
 
 	c.Web.HTTPErrorHandler = errorHandler.Handler
 
-	navRoutes(c.Web, ctr)
-	userRoutes(c.Web, ctr)
+	navRoutes(c, ctr)
+	userRoutes(c, ctr)
 }
 
-func navRoutes(e *echo.Echo, ctr controller.Controller) {
+func navRoutes(c *container.Container, ctr controller.Controller) {
 	home := Home{Controller: ctr}
-	e.GET("/", home.Get).Name = "home"
+	c.Web.GET("/", home.Get).Name = "home"
 
 	about := About{Controller: ctr}
-	e.GET("/about", about.Get).Name = "about"
+	c.Web.GET("/about", about.Get).Name = "about"
 
 	contact := Contact{Controller: ctr}
-	e.GET("/contact", contact.Get).Name = "contact"
-	e.POST("/contact", contact.Post).Name = "contact.post"
+	c.Web.GET("/contact", contact.Get).Name = "contact"
+	c.Web.POST("/contact", contact.Post).Name = "contact.post"
 }
 
-func userRoutes(e *echo.Echo, ctr controller.Controller) {
+func userRoutes(c *container.Container, ctr controller.Controller) {
 	{
 		logout := Logout{Controller: ctr}
-		e.GET("/logout", logout.Get, middleware.RequireAuthentication()).
+		c.Web.GET("/logout", logout.Get, middleware.RequireAuthentication()).
 			Name = "logout"
 	}
 
-	noAuth := e.Group("/user", middleware.RequireNoAuthentication())
+	noAuth := c.Web.Group("/user", middleware.RequireNoAuthentication())
 	{
 		login := Login{Controller: ctr}
 		noAuth.GET("/login", login.Get).Name = "login"
@@ -104,6 +103,11 @@ func userRoutes(e *echo.Echo, ctr controller.Controller) {
 		forgot := ForgotPassword{Controller: ctr}
 		noAuth.GET("/password", forgot.Get).Name = "forgot_password"
 		noAuth.POST("/password", forgot.Post).Name = "forgot_password.post"
+
+		resetGroup := noAuth.Group("/password/reset", middleware.LoadValidPasswordToken(c.Auth))
+		reset := ResetPassword{Controller: ctr}
+		resetGroup.GET("/token/:userId/:password_token", reset.Get).Name = "reset_password"
+		resetGroup.POST("/token/:userId/:password_token", reset.Post).Name = "reset_password.post"
 	}
 
 }

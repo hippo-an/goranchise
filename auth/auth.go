@@ -3,13 +3,14 @@ package auth
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"errors"
 	"github.com/hippo-an/goranchise/config"
 	"github.com/hippo-an/goranchise/ent"
+	"github.com/hippo-an/goranchise/ent/passwordtoken"
 	"github.com/hippo-an/goranchise/ent/user"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
+	"time"
 )
 
 const (
@@ -17,6 +18,12 @@ const (
 	sessionKeyUserId        = "user_id"
 	sessionKeyAuthenticated = "authenticated"
 )
+
+type InvalidTokenError struct{}
+
+func (e InvalidTokenError) Error() string {
+	return "invalid token"
+}
 
 type Client struct {
 	config *config.Config
@@ -73,7 +80,7 @@ func (c *Client) GetAuthenticatedUser(ctx echo.Context) (*ent.User, error) {
 			Where(user.ID(userId)).
 			First(ctx.Request().Context())
 	}
-	return nil, errors.New("user not authenticated")
+	return nil, NotAuthenticatedError{}
 }
 
 func (c *Client) HashPassword(password string) (string, error) {
@@ -111,4 +118,26 @@ func (c *Client) RandomToken(length int) string {
 		return ""
 	}
 	return hex.EncodeToString(b)
+}
+
+func (c *Client) GetValidPasswordToken(ctx echo.Context, token string, userId int) (*ent.PasswordToken, error) {
+
+	expiration := time.Now().Add(-c.config.App.PasswordTokenExpiration)
+	pts, err := c.orm.PasswordToken.
+		Query().
+		Where(passwordtoken.HasUserWith(user.ID(userId))).
+		Where(passwordtoken.CreatedAtGTE(expiration)).
+		All(ctx.Request().Context())
+	if err != nil {
+		ctx.Logger().Error(err)
+		return nil, err
+	}
+
+	for _, pt := range pts {
+		if err := c.CheckPassword(token, pt.Hash); err == nil {
+			return pt, nil
+		}
+	}
+
+	return nil, InvalidTokenError{}
 }
