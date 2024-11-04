@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/hippo-an/goranchise/context"
 	"github.com/hippo-an/goranchise/controller"
+	"github.com/hippo-an/goranchise/ent/user"
 	"github.com/hippo-an/goranchise/msg"
 	"github.com/labstack/echo/v4"
 )
@@ -43,6 +44,18 @@ func (r *Register) Post(c echo.Context) error {
 	form := new(RegisterForm)
 	if err := c.Bind(form); err != nil {
 		return fail("unable to parse form values", err)
+	}
+
+	exists, err := r.Container.ORM.User.
+		Query().
+		Where(user.Email(form.Email)).
+		Exist(c.Request().Context())
+	switch {
+	case err != nil:
+		return fail("unable to query to see if email is taken", err)
+	case exists:
+		msg.Warning(c, "A user with this email address already exists. Please log in.")
+		return r.Redirect(c, "login")
 	}
 
 	c.Set(context.FormKey, *form)

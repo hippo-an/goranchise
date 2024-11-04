@@ -17,6 +17,7 @@ const (
 	sessionName             = "ua"
 	sessionKeyUserId        = "user_id"
 	sessionKeyAuthenticated = "authenticated"
+	passwordTokenLength     = 64
 )
 
 type InvalidTokenError struct{}
@@ -78,7 +79,7 @@ func (c *Client) GetAuthenticatedUser(ctx echo.Context) (*ent.User, error) {
 	if userId, err := c.GetAuthenticatedUserId(ctx); err == nil {
 		return c.orm.User.Query().
 			Where(user.ID(userId)).
-			First(ctx.Request().Context())
+			Only(ctx.Request().Context())
 	}
 	return nil, NotAuthenticatedError{}
 }
@@ -96,7 +97,11 @@ func (c *Client) CheckPassword(password, hash string) error {
 }
 
 func (c *Client) GeneratePasswordResetToken(ctx echo.Context, userId int) (string, *ent.PasswordToken, error) {
-	token := c.RandomToken(64)
+	token, err := c.RandomToken(passwordTokenLength)
+
+	if err != nil {
+		return "", nil, err
+	}
 
 	hash, err := c.HashPassword(token)
 	if err != nil {
@@ -112,12 +117,12 @@ func (c *Client) GeneratePasswordResetToken(ctx echo.Context, userId int) (strin
 	return token, pt, err
 }
 
-func (c *Client) RandomToken(length int) string {
+func (c *Client) RandomToken(length int) (string, error) {
 	b := make([]byte, length)
 	if _, err := rand.Read(b); err != nil {
-		return ""
+		return "", err
 	}
-	return hex.EncodeToString(b)
+	return hex.EncodeToString(b), nil
 }
 
 func (c *Client) GetValidPasswordToken(ctx echo.Context, token string, userId int) (*ent.PasswordToken, error) {
@@ -140,4 +145,12 @@ func (c *Client) GetValidPasswordToken(ctx echo.Context, token string, userId in
 	}
 
 	return nil, InvalidTokenError{}
+}
+
+func (c *Client) DeletePasswordTokens(ctx echo.Context, userId int) error {
+	_, err := c.orm.PasswordToken.
+		Delete().
+		Where(passwordtoken.HasUserWith(user.ID(userId))).
+		Exec(ctx.Request().Context())
+	return err
 }

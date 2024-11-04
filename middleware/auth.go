@@ -7,7 +7,6 @@ import (
 	"github.com/hippo-an/goranchise/msg"
 	"github.com/labstack/echo/v4"
 	"net/http"
-	"strconv"
 )
 
 func LoadAuthenticatedUser(authClient *auth.Client) echo.MiddlewareFunc {
@@ -34,10 +33,12 @@ func LoadAuthenticatedUser(authClient *auth.Client) echo.MiddlewareFunc {
 func LoadValidPasswordToken(a *auth.Client) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			userId, err := strconv.Atoi(c.Param("userId"))
-			if err != nil {
-				return echo.NewHTTPError(http.StatusNotFound, "Not found")
+			var u *ent.User
+			cu := c.Get(context.UserKey)
+			if cu == nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 			}
+			u = cu.(*ent.User)
 
 			tokenPathParam := c.Param("password_token")
 			if tokenPathParam == "" {
@@ -45,7 +46,7 @@ func LoadValidPasswordToken(a *auth.Client) echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusNotFound, "not fount password token")
 			}
 
-			token, err := a.GetValidPasswordToken(c, tokenPathParam, userId)
+			_, err := a.GetValidPasswordToken(c, tokenPathParam, u.ID)
 			switch err.(type) {
 			case nil:
 			case auth.InvalidTokenError:
@@ -56,7 +57,6 @@ func LoadValidPasswordToken(a *auth.Client) echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 			}
 
-			c.Set(context.PasswordTokenKey, token)
 			return next(c)
 		}
 	}

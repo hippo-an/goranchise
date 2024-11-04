@@ -62,6 +62,7 @@ func (l *Login) Post(c echo.Context) error {
 		case *ent.NotFoundError:
 			msg.Danger(c, "Check email and password")
 			return l.Get(c)
+		case nil:
 		default:
 			return fail("error querying user during login", err)
 		}

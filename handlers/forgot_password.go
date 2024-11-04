@@ -66,6 +66,7 @@ func (f *ForgotPassword) Post(c echo.Context) error {
 		switch err.(type) {
 		case *ent.NotFoundError:
 			return succeed()
+		case nil:
 		default:
 			return fail("error querying user during forgot password", err)
 		}
@@ -78,7 +79,10 @@ func (f *ForgotPassword) Post(c echo.Context) error {
 	c.Logger().Infof("generated password reset token for user %d", u.ID)
 
 	// Email the user
-	err = f.Container.Mail.SendMail(c, u.Email, fmt.Sprintf("Go here to reset your password: %s", token))
+	err = f.Container.Mail.SendMail(
+		c,
+		u.Email,
+		fmt.Sprintf("Go here to reset your password: %s", c.Echo().Reverse("reset_password", u.ID, token)))
 	if err != nil {
 		return fail("error sending password reset email", err)
 	}

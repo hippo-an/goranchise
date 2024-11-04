@@ -3,6 +3,8 @@ package handlers
 import (
 	"github.com/hippo-an/goranchise/context"
 	"github.com/hippo-an/goranchise/controller"
+	"github.com/hippo-an/goranchise/ent"
+	"github.com/hippo-an/goranchise/ent/user"
 	"github.com/hippo-an/goranchise/msg"
 	"github.com/labstack/echo/v4"
 )
@@ -33,13 +35,7 @@ func (r *ResetPassword) Post(c echo.Context) error {
 		return r.Get(c)
 	}
 
-	succeed := func() error {
-		c.Set(context.AuthenticatedUserKey, nil)
-		msg.Success(c, "Your password has been updated.")
-		return r.Redirect(c, "login")
-	}
-
-	form := new(ResetPassword)
+	form := new(ResetPasswordForm)
 	if err := c.Bind(form); err != nil {
 		return fail("unable to parse reset password form", err)
 	}
@@ -49,5 +45,29 @@ func (r *ResetPassword) Post(c echo.Context) error {
 		return r.Get(c)
 	}
 
-	return succeed()
+	hash, err := r.Container.Auth.HashPassword(form.Password)
+	if err != nil {
+		return fail("unable to hash password", err)
+	}
+
+	usr := c.Get(context.UserKey).(*ent.User)
+
+	_, err = r.Container.ORM.User.
+		Update().
+		SetPassword(hash).
+		Where(user.ID(usr.ID)).
+		Save(c.Request().Context())
+
+	if err != nil {
+		return fail("unable to update password", err)
+	}
+
+	err = r.Container.Auth.DeletePasswordTokens(c, usr.ID)
+	if err != nil {
+		return fail("unable to delete password tokens", err)
+	}
+
+	msg.Success(c, "Your password has been updated.")
+
+	return r.Redirect(c, "login")
 }
