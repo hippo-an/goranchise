@@ -10,7 +10,9 @@ app:
   environment: "local"
   encryptionKey: "?E(G+KbPeShVmYq3t6w9z$C&F)J@McQf"
   timeout: "20s"
-  passwordTokenExpiration: 60m
+  passwordToken:
+    expiration: 60m
+    length: 64
 
 cache:
   hostname: "localhost"
