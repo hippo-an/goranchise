@@ -3,7 +3,7 @@ package handlers
 import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/hippo-an/goranchise/config"
-	"github.com/hippo-an/goranchise/container"
+	"github.com/hippo-an/goranchise/services"
 	"github.com/labstack/gommon/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,7 +16,7 @@ import (
 
 var (
 	srv *httptest.Server
-	c   *container.Container
+	c   *services.Container
 )
 
 func TestMain(m *testing.M) {
@@ -26,7 +26,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
-	c = container.NewContainer()
+	c = services.NewContainer()
 
 	BuildRouter(c)
 	c.Web.Logger.SetLevel(log.DEBUG)

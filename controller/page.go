@@ -3,7 +3,6 @@ package controller
 import (
 	"github.com/hippo-an/goranchise/context"
 	"github.com/hippo-an/goranchise/msg"
-	"github.com/hippo-an/goranchise/pager"
 	"github.com/labstack/echo/v4"
 	echomw "github.com/labstack/echo/v4/middleware"
 	"html/template"
@@ -11,16 +10,13 @@ import (
 	"time"
 )
 
-const (
-	DefaultItemsPerPage = 20
-)
-
 type Page struct {
 	AppName    string
 	Title      string
 	Context    echo.Context
-	Reverse    func(name string, params ...interface{}) string
+	ToURL      func(name string, params ...interface{}) string
 	Path       string
+	URL        string
 	Data       interface{}
 	Layout     string
 	PageName   string
@@ -31,7 +27,7 @@ type Page struct {
 		Description string
 		Keywords    []string
 	}
-	Pager   pager.Pager
+	Pager   Pager
 	CSRF    string
 	Headers map[string]string
 	Cache   struct {
@@ -45,10 +41,11 @@ type Page struct {
 func NewPage(c echo.Context) Page {
 	p := Page{
 		Context:    c,
-		Reverse:    c.Echo().Reverse,
+		ToURL:      c.Echo().Reverse,
 		Path:       c.Request().URL.Path,
+		URL:        c.Request().URL.String(),
 		StatusCode: http.StatusOK,
-		Pager:      pager.NewPager(c, DefaultItemsPerPage),
+		Pager:      NewPager(c),
 		Headers:    make(map[string]string),
 		RequestId:  c.Response().Header().Get(echo.HeaderXRequestID),
 	}

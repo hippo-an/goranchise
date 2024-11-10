@@ -1,22 +1,22 @@
 package middleware
 
 import (
-	"github.com/hippo-an/goranchise/container"
 	"github.com/hippo-an/goranchise/context"
 	"github.com/hippo-an/goranchise/ent"
 	"github.com/hippo-an/goranchise/msg"
+	"github.com/hippo-an/goranchise/services"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
 
-func LoadAuthenticatedUser(authClient *container.AuthClient) echo.MiddlewareFunc {
+func LoadAuthenticatedUser(authClient *services.AuthClient) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			if user, err := authClient.GetAuthenticatedUser(c); err == nil {
 				switch err.(type) {
 				case *ent.NotFoundError:
 					c.Logger().Debug("auth user not found")
-				case container.NotAuthenticatedError:
+				case services.NotAuthenticatedError:
 				case nil:
 					c.Set(context.AuthenticatedUserKey, user)
 					c.Logger().Info("auth user loaded in to context: %d", user.ID)
@@ -30,7 +30,7 @@ func LoadAuthenticatedUser(authClient *container.AuthClient) echo.MiddlewareFunc
 	}
 }
 
-func LoadValidPasswordToken(a *container.AuthClient) echo.MiddlewareFunc {
+func LoadValidPasswordToken(a *services.AuthClient) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			var u *ent.User
@@ -49,7 +49,7 @@ func LoadValidPasswordToken(a *container.AuthClient) echo.MiddlewareFunc {
 			_, err := a.GetValidPasswordToken(c, tokenPathParam, u.ID)
 			switch err.(type) {
 			case nil:
-			case container.InvalidTokenError:
+			case services.InvalidPasswordTokenError:
 				msg.Warning(c, "The link is either invalid or has expired. Please request a new one.")
 				return c.Redirect(http.StatusFound, c.Echo().Reverse("forgot_password"))
 			default:

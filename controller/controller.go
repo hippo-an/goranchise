@@ -7,10 +7,10 @@ import (
 	"github.com/eko/gocache/lib/v4/store"
 	"github.com/go-playground/validator/v10"
 	"github.com/hippo-an/goranchise/config"
-	"github.com/hippo-an/goranchise/container"
 	"github.com/hippo-an/goranchise/funcmap"
 	"github.com/hippo-an/goranchise/middleware"
 	"github.com/hippo-an/goranchise/msg"
+	"github.com/hippo-an/goranchise/services"
 	"github.com/labstack/echo/v4"
 	"html/template"
 	"net/http"
@@ -33,10 +33,10 @@ var (
 )
 
 type Controller struct {
-	Container *container.Container
+	Container *services.Container
 }
 
-func NewController(c *container.Container) Controller {
+func NewController(c *services.Container) Controller {
 	return Controller{
 		Container: c,
 	}

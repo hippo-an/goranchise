@@ -1,4 +1,4 @@
-package container
+package services
 
 import (
 	"errors"
@@ -60,7 +60,7 @@ func TestCheckPassword(t *testing.T) {
 
 func TestGetValidPasswordToken(t *testing.T) {
 	_, err := c.Auth.GetValidPasswordToken(ctx, "notValidToken:)", usr.ID)
-	assert.True(t, errors.Is(err, InvalidTokenError{}))
+	assert.True(t, errors.Is(err, InvalidPasswordTokenError{}))
 }
 
 func TestGeneratePasswordResetToken(t *testing.T) {

@@ -1,4 +1,4 @@
-package container
+package services
 
 import (
 	"crypto/rand"
@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	sessionName             = "ua"
-	sessionKeyUserId        = "user_id"
-	sessionKeyAuthenticated = "authenticated"
+	authSessionName             = "ua"
+	authSessionKeyUserId        = "user_id"
+	authSessionKeyAuthenticated = "authenticated"
 )
 
 type AuthClient struct {
@@ -32,32 +32,32 @@ func NewClient(cfg *config.Config, orm *ent.Client) *AuthClient {
 }
 
 func (c *AuthClient) Login(ctx echo.Context, userId int) error {
-	sess, err := session.Get(sessionName, ctx)
+	sess, err := session.Get(authSessionName, ctx)
 	if err != nil {
 		return err
 	}
 
-	sess.Values[sessionKeyUserId] = userId
-	sess.Values[sessionKeyAuthenticated] = true
+	sess.Values[authSessionKeyUserId] = userId
+	sess.Values[authSessionKeyAuthenticated] = true
 	return sess.Save(ctx.Request(), ctx.Response())
 }
 
 func (c *AuthClient) Logout(ctx echo.Context) error {
-	sess, err := session.Get(sessionName, ctx)
+	sess, err := session.Get(authSessionName, ctx)
 	if err != nil {
 		return err
 	}
-	sess.Values[sessionKeyAuthenticated] = false
+	sess.Values[authSessionKeyAuthenticated] = false
 	return sess.Save(ctx.Request(), ctx.Response())
 }
 
 func (c *AuthClient) GetAuthenticatedUserId(ctx echo.Context) (int, error) {
-	sess, err := session.Get(sessionName, ctx)
+	sess, err := session.Get(authSessionName, ctx)
 	if err != nil {
 		return 0, err
 	}
-	if sess.Values[sessionKeyAuthenticated] == true {
-		return sess.Values[sessionKeyUserId].(int), nil
+	if sess.Values[authSessionKeyAuthenticated] == true {
+		return sess.Values[authSessionKeyUserId].(int), nil
 	}
 	return 0, NotAuthenticatedError{}
 }
@@ -132,7 +132,7 @@ func (c *AuthClient) GetValidPasswordToken(ctx echo.Context, token string, userI
 		}
 	}
 
-	return nil, InvalidTokenError{}
+	return nil, InvalidPasswordTokenError{}
 }
 
 func (c *AuthClient) DeletePasswordTokens(ctx echo.Context, userId int) error {

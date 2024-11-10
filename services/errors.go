@@ -1,8 +1,8 @@
-package container
+package services
 
-type InvalidTokenError struct{}
+type InvalidPasswordTokenError struct{}
 
-func (e InvalidTokenError) Error() string {
+func (e InvalidPasswordTokenError) Error() string {
 	return "invalid token"
 }
 

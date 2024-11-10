@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hippo-an/goranchise/container"
 	"github.com/hippo-an/goranchise/handlers"
+	"github.com/hippo-an/goranchise/services"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	c := container.NewContainer()
+	c := services.NewContainer()
 
 	handlers.BuildRouter(c)
 

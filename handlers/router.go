@@ -3,9 +3,9 @@ package handlers
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/sessions"
-	"github.com/hippo-an/goranchise/container"
 	"github.com/hippo-an/goranchise/controller"
 	"github.com/hippo-an/goranchise/middleware"
+	"github.com/hippo-an/goranchise/services"
 	"github.com/labstack/echo-contrib/session"
 	echomw "github.com/labstack/echo/v4/middleware"
 	"net/http"
@@ -27,7 +27,7 @@ func (v *Validator) Validate(i interface{}) error {
 	return nil
 }
 
-func BuildRouter(c *container.Container) {
+func BuildRouter(c *services.Container) {
 
 	c.Web.Group("", middleware.CacheControl(c.Config.Cache.Expiration.StaticFile)).
 		Static("/public", PublicDir)
@@ -71,7 +71,7 @@ func BuildRouter(c *container.Container) {
 	userRoutes(c, ctr)
 }
 
-func navRoutes(c *container.Container, ctr controller.Controller) {
+func navRoutes(c *services.Container, ctr controller.Controller) {
 	home := Home{Controller: ctr}
 	c.Web.GET("/", home.Get).Name = "home"
 
@@ -83,7 +83,7 @@ func navRoutes(c *container.Container, ctr controller.Controller) {
 	c.Web.POST("/contact", contact.Post).Name = "contact.post"
 }
 
-func userRoutes(c *container.Container, ctr controller.Controller) {
+func userRoutes(c *services.Container, ctr controller.Controller) {
 	{
 		logout := Logout{Controller: ctr}
 		c.Web.GET("/logout", logout.Get, middleware.RequireAuthentication()).

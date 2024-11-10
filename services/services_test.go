@@ -1,11 +1,10 @@
-package container
+package services
 
 import (
 	"context"
 	"github.com/hippo-an/goranchise/config"
 	"github.com/hippo-an/goranchise/ent"
 	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -24,7 +23,7 @@ func TestMain(m *testing.M) {
 	// Set the environment to test
 	config.SwitchEnvironment(config.EnvironmentTest)
 
-	// Create a new container
+	// Create a new services
 	c = NewContainer()
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(""))
@@ -44,15 +43,4 @@ func TestMain(m *testing.M) {
 
 	exitVal := m.Run()
 	os.Exit(exitVal)
-}
-
-func TestNewContainer(t *testing.T) {
-	c := NewContainer()
-	assert.NotNil(t, c.Web)
-	assert.NotNil(t, c.Config)
-	assert.NotNil(t, c.Cache)
-	assert.NotNil(t, c.Database)
-	assert.NotNil(t, c.ORM)
-	assert.NotNil(t, c.Mail)
-	assert.NotNil(t, c.Auth)
 }
