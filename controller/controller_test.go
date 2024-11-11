@@ -20,11 +20,11 @@ func TestMain(m *testing.M) {
 
 	c = services.NewContainer()
 
-	exitCodt := m.Run()
-	os.Exit(exitCodt)
+	exitCode := m.Run()
+	os.Exit(exitCode)
 }
 
 func newContext(url string) echo.Context {
-	req := httptest.NewRequest(http.MethodPost, url, strings.NewReader(""))
+	req := httptest.NewRequest(http.MethodGet, url, strings.NewReader(""))
 	return c.Web.NewContext(req, httptest.NewRecorder())
 }

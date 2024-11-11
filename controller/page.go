@@ -45,7 +45,7 @@ func NewPage(c echo.Context) Page {
 		Path:       c.Request().URL.Path,
 		URL:        c.Request().URL.String(),
 		StatusCode: http.StatusOK,
-		Pager:      NewPager(c),
+		Pager:      NewPager(c, DefaultItemsPerPage),
 		Headers:    make(map[string]string),
 		RequestId:  c.Response().Header().Get(echo.HeaderXRequestID),
 	}

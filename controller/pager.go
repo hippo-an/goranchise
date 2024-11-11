@@ -8,24 +8,39 @@ import (
 
 const (
 	DefaultItemsPerPage = 20
+	PageQueryKey        = "page"
 )
 
 type Pager struct {
-	Items        int
-	Page         int
+	// Items stores the total amount of items in the result
+	Items int
+
+	// ItemsPerPage stores the amount of items to display per page
 	ItemsPerPage int
-	Pages        int
+
+	// Page stores the current page number
+	Page int
+
+	// Pages store the total amount of pages in the result
+	Pages int
 }
 
-func NewPager(e echo.Context) Pager {
+func NewPager(e echo.Context, itemPerPage int) Pager {
+
+	if itemPerPage <= 0 {
+		itemPerPage = DefaultItemsPerPage
+	}
+
 	p := Pager{
-		ItemsPerPage: DefaultItemsPerPage,
+		ItemsPerPage: itemPerPage,
 		Page:         1,
 	}
 
-	if page := e.QueryParam("page"); page != "" {
+	if page := e.QueryParam(PageQueryKey); page != "" {
 		if pageInt, err := strconv.Atoi(page); err == nil {
-			p.Page = pageInt
+			if pageInt > 0 {
+				p.Page = pageInt
+			}
 		}
 	}
 

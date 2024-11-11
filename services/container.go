@@ -48,6 +48,7 @@ func (c *Container) initWeb() {
 	default:
 		c.Web.Logger.SetLevel(log.DEBUG)
 	}
+	c.Web.HideBanner = true
 }
 
 func (c *Container) initConfig() {
