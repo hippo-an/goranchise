@@ -1,5 +1,6 @@
 package controller
 
+import "C"
 import (
 	"bytes"
 	"errors"
@@ -7,25 +8,12 @@ import (
 	"github.com/eko/gocache/lib/v4/marshaler"
 	"github.com/eko/gocache/lib/v4/store"
 	"github.com/go-playground/validator/v10"
-	"github.com/hippo-an/goranchise/config"
-	"github.com/hippo-an/goranchise/funcmap"
 	"github.com/hippo-an/goranchise/middleware"
 	"github.com/hippo-an/goranchise/msg"
 	"github.com/hippo-an/goranchise/services"
 	"github.com/labstack/echo/v4"
-	"html/template"
 	"net/http"
-	"path"
-	"path/filepath"
 	"reflect"
-	"runtime"
-	"sync"
-)
-
-var (
-	templates    = sync.Map{}
-	funcMap      = funcmap.GetFuncMap()
-	templatePath = getTemplatesDirectoryPath()
 )
 
 type Controller struct {
@@ -48,12 +36,12 @@ func (c *Controller) RenderPage(ctx echo.Context, p Page) error {
 		p.AppName = c.Container.Config.App.Name
 	}
 
-	if err := c.parsePageTemplate(p); err != nil {
+	if err := c.parsePageTemplates(p); err != nil {
 		ctx.Logger().Errorf("failed to parse templates: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 	}
 
-	buf, err := c.executeTemplate(ctx, p)
+	buf, err := c.executeTemplate(p)
 
 	if err != nil {
 		ctx.Logger().Errorf("failed to execute templates: %v", err)
@@ -69,29 +57,16 @@ func (c *Controller) RenderPage(ctx echo.Context, p Page) error {
 	return ctx.HTMLBlob(p.StatusCode, buf.Bytes())
 }
 
-func (c *Controller) executeTemplate(ctx echo.Context, p Page) (*bytes.Buffer, error) {
-	tmpl, ok := templates.Load(p.PageName)
-
-	if !ok {
-		return nil, errors.New("uncached page template requested")
-	}
-
-	buf := new(bytes.Buffer)
-	err := tmpl.(*template.Template).ExecuteTemplate(buf, p.Layout+config.TemplateExt, p)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return buf, nil
+func (c *Controller) executeTemplate(page Page) (*bytes.Buffer, error) {
+	return c.Container.Templates.Execute("controller", page.PageName, page.Layout, page)
 }
 
-func (c *Controller) cachePage(ctx echo.Context, p Page, html *bytes.Buffer) {
-	if !p.Cache.Enabled {
+func (c *Controller) cachePage(ctx echo.Context, page Page, html *bytes.Buffer) {
+	if !page.Cache.Enabled {
 		return
 	}
-	if p.Cache.Expiration == 0 {
-		p.Cache.Expiration = c.Container.Config.Cache.Expiration.Page
+	if page.Cache.Expiration == 0 {
+		page.Cache.Expiration = c.Container.Config.Cache.Expiration.Page
 	}
 
 	key := ctx.Request().URL.String()
@@ -99,16 +74,16 @@ func (c *Controller) cachePage(ctx echo.Context, p Page, html *bytes.Buffer) {
 	cp := middleware.CachedPage{
 		URL:        key,
 		HTML:       html.Bytes(),
-		Headers:    p.Headers,
-		StatusCode: p.StatusCode,
+		Headers:    page.Headers,
+		StatusCode: page.StatusCode,
 	}
 
 	err := marshaler.New(c.Container.Cache).Set(
 		ctx.Request().Context(),
 		key,
 		cp,
-		store.WithExpiration(p.Cache.Expiration),
-		store.WithTags(p.Cache.Tags),
+		store.WithExpiration(page.Cache.Expiration),
+		store.WithTags(page.Cache.Tags),
 	)
 
 	if err != nil {
@@ -116,45 +91,25 @@ func (c *Controller) cachePage(ctx echo.Context, p Page, html *bytes.Buffer) {
 		ctx.Logger().Error(err)
 		return
 	}
-	ctx.Logger().Infof("cached page for: %s", key)
 
+	ctx.Logger().Infof("cached page for: %s", key)
 }
 
-func (c *Controller) parsePageTemplate(p Page) error {
-	if _, ok := templates.Load(p.PageName); !ok || c.Container.Config.App.Environment == config.EnvironmentLocal {
-		parsed, err := template.New(p.Layout+config.TemplateExt).
-			Funcs(funcMap).
-			ParseFiles(
-				fmt.Sprintf("%s/layouts/%s%s", templatePath, p.Layout, config.TemplateExt),
-				fmt.Sprintf("%s/pages/%s%s", templatePath, p.PageName, config.TemplateExt),
-			)
-
-		if err != nil {
-			return err
-		}
-
-		parsed, err = parsed.ParseGlob(fmt.Sprintf("%s/components/*%s", templatePath, config.TemplateExt))
-
-		if err != nil {
-			return err
-		}
-
-		templates.Store(p.PageName, parsed)
-
-	}
-	return nil
+func (c *Controller) parsePageTemplates(page Page) error {
+	return c.Container.Templates.Parse(
+		"controller",
+		page.PageName,
+		page.Layout,
+		[]string{
+			fmt.Sprintf("layouts/%s", page.Layout),
+			fmt.Sprintf("pages/%s", page.PageName),
+		},
+		[]string{"components"},
+	)
 }
 
 func (c *Controller) Redirect(ctx echo.Context, route string, routeParams ...interface{}) error {
 	return ctx.Redirect(http.StatusFound, ctx.Echo().Reverse(route, routeParams))
-}
-
-// getTemplatesDirectoryPath gets the templates directory path
-// This is needed in case this is called from a package outside of main, such as testing
-func getTemplatesDirectoryPath() string {
-	_, b, _, _ := runtime.Caller(0)
-	d := path.Join(path.Dir(b))
-	return filepath.Join(filepath.Dir(d), config.TemplateDir)
 }
 
 func (c *Controller) SetValidationErrorMessages(ctx echo.Context, err error, data interface{}) {

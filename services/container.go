@@ -10,7 +10,6 @@ import (
 	redisstore "github.com/eko/gocache/store/redis/v4"
 	"github.com/hippo-an/goranchise/config"
 	"github.com/hippo-an/goranchise/ent"
-	"github.com/hippo-an/goranchise/mail"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
@@ -24,8 +23,9 @@ type Container struct {
 	cacheClient *redis.Client
 	Database    *sql.DB
 	ORM         *ent.Client
-	Mail        *mail.Client
 	Auth        *AuthClient
+	Templates   *TemplateRenderer
+	Mail        *MailClient
 }
 
 func NewContainer() *Container {
@@ -35,8 +35,9 @@ func NewContainer() *Container {
 	c.initCache()
 	c.initDatabase()
 	c.initORM()
-	c.initMail()
 	c.initAuth()
+	c.initTemplateRenderer()
+	c.initMail()
 	return c
 }
 
@@ -131,10 +132,14 @@ func (c *Container) initORM() {
 	}
 }
 
-func (c *Container) initMail() {
-	c.Mail = mail.NewClient(c.Config)
+func (c *Container) initAuth() {
+	c.Auth = NewAuthClient(c.Config, c.ORM)
 }
 
-func (c *Container) initAuth() {
-	c.Auth = NewClient(c.Config, c.ORM)
+func (c *Container) initTemplateRenderer() {
+	c.Templates = NewTemplateRenderer(c.Config)
+}
+
+func (c *Container) initMail() {
+	c.Mail = NewMailClient(c.Config, c.Templates)
 }

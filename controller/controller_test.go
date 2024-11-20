@@ -14,7 +14,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -115,20 +114,18 @@ func TestController_RenderPage(t *testing.T) {
 			assert.Equal(t, v, ctx.Response().Header().Get(k))
 		}
 
-		parsed, ok := templates.Load(p.PageName)
-		assert.True(t, ok)
+		parsed, err := c.Templates.Load("controller", p.PageName)
+		assert.NoError(t, err)
 
 		expectedTemplates := make(map[string]bool)
-		expectedTemplates[p.PageName+TemplateExt] = true
-		expectedTemplates[p.Layout+TemplateExt] = true
-		components, err := os.ReadDir(getTemplatesDirectoryPath() + "/components")
+		expectedTemplates[p.PageName+config.TemplateExt] = true
+		expectedTemplates[p.Layout+config.TemplateExt] = true
+		components, err := os.ReadDir(c.Templates.GetTemplatesPath() + "/components")
 		require.NoError(t, err)
 		for _, f := range components {
 			expectedTemplates[f.Name()] = true
 		}
-		tmpl, ok := parsed.(*template.Template)
-		require.True(t, ok)
-		for _, v := range tmpl.Templates() {
+		for _, v := range parsed.Templates() {
 			delete(expectedTemplates, v.Name())
 		}
 		assert.Empty(t, expectedTemplates)
