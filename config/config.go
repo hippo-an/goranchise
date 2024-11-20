@@ -15,6 +15,16 @@ const (
 	EnvironmentProd  Environment = "prod"
 )
 
+const (
+	StaticDir = "static"
+	PublicDir = "public"
+)
+
+const (
+	TemplateDir = "templates"
+	TemplateExt = ".tmpl"
+)
+
 type (
 	Config struct {
 		Http     HttpConfig

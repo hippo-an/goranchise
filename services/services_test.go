@@ -26,6 +26,12 @@ func TestMain(m *testing.M) {
 	// Create a new services
 	c = NewContainer()
 
+	defer func() {
+		if err := c.Shutdown(); err != nil {
+			c.Web.Logger.Fatal(err)
+		}
+	}()
+
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(""))
 	rec = httptest.NewRecorder()
 	ctx = c.Web.NewContext(req, rec)

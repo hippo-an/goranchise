@@ -1,14 +1,10 @@
 package controller
 
 import (
-	"github.com/gorilla/sessions"
 	"github.com/hippo-an/goranchise/context"
 	"github.com/hippo-an/goranchise/msg"
-	"github.com/labstack/echo-contrib/session"
-	"github.com/labstack/echo/v4"
 	echomw "github.com/labstack/echo/v4/middleware"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"strings"
 	"testing"
@@ -16,7 +12,7 @@ import (
 
 func TestNewPage(t *testing.T) {
 	homeUrl := "/"
-	ctx := newContext(homeUrl)
+	ctx, _ := newContext(homeUrl)
 	p := NewPage(ctx)
 
 	assert.Same(t, ctx, p.Context)
@@ -34,7 +30,7 @@ func TestNewPage(t *testing.T) {
 
 	url := "/abc?def=123"
 	csrfToken := "csrf"
-	ctx = newContext(url)
+	ctx, _ = newContext(url)
 	ctx.Set(context.AuthenticatedUserKey, 1)
 	ctx.Set(echomw.DefaultCSRFConfig.ContextKey, csrfToken)
 	p = NewPage(ctx)
@@ -47,14 +43,10 @@ func TestNewPage(t *testing.T) {
 }
 
 func TestPage_GetMessages(t *testing.T) {
-	ctx := newContext("/")
+	ctx, _ := newContext("/")
 
 	p := NewPage(ctx)
-	mw := session.Middleware(sessions.NewCookieStore([]byte("secret")))
-	handler := mw(echo.NotFoundHandler)
-	err := handler(ctx)
-	assert.Error(t, err)
-	require.ErrorIs(t, err, echo.ErrNotFound)
+	initSession(t, ctx)
 
 	msgTests := make(map[msg.Type][]string)
 	msgTests[msg.TypeWarning] = []string{

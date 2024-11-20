@@ -11,11 +11,6 @@ import (
 	"net/http"
 )
 
-const (
-	StaticDir = "static"
-	PublicDir = "public"
-)
-
 type Validator struct {
 	validator *validator.Validate
 }
@@ -49,7 +44,7 @@ func BuildRouter(c *services.Container) {
 		echomw.TimeoutWithConfig(echomw.TimeoutConfig{
 			Timeout: c.Config.App.Timeout,
 		}),
-		middleware.PageCache(c.Cache),
+		middleware.ServeCachedPage(c.Cache),
 		session.Middleware(sessions.NewCookieStore([]byte(c.Config.App.EncryptionKey))),
 		echomw.CSRFWithConfig(echomw.CSRFConfig{
 			TokenLookup: "form:csrf",

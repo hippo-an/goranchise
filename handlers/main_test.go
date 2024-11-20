@@ -28,6 +28,12 @@ func TestMain(m *testing.M) {
 
 	c = services.NewContainer()
 
+	defer func() {
+		if err := c.Shutdown(); err != nil {
+			c.Web.Logger.Fatal(err)
+		}
+	}()
+
 	BuildRouter(c)
 	c.Web.Logger.SetLevel(log.DEBUG)
 

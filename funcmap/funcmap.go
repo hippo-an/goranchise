@@ -3,6 +3,7 @@ package funcmap
 import (
 	"fmt"
 	"github.com/Masterminds/sprig"
+	"github.com/hippo-an/goranchise/config"
 	"github.com/labstack/gommon/random"
 	"html/template"
 	"reflect"
@@ -42,7 +43,7 @@ func HasField(v interface{}, name string) bool {
 }
 
 func File(filepath string) string {
-	return fmt.Sprintf("%s?v=%s", filepath, CacheKey)
+	return fmt.Sprintf("/%s/%s?v=%s", config.StaticDir, filepath, CacheKey)
 }
 
 func Link(url, text, currentPath string, classes ...string) template.HTML {

@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/eko/gocache/lib/v4/cache"
 	"github.com/eko/gocache/lib/v4/marshaler"
+	"github.com/hippo-an/goranchise/context"
 	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
+	"net/http"
 	"time"
 )
 
@@ -17,15 +19,23 @@ type CachedPage struct {
 	Headers    map[string]string
 }
 
-func PageCache(ch *cache.Cache[any]) echo.MiddlewareFunc {
+func ServeCachedPage(ch *cache.Cache[any]) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+
+			if c.Request().Method != http.MethodGet {
+				return next(c)
+			}
+
+			if c.Get(context.AuthenticatedUserKey) != nil {
+				return next(c)
+			}
 
 			res, err := marshaler.New(ch).Get(c.Request().Context(), c.Request().URL.String(), new(CachedPage))
 
 			if err != nil {
 				if errors.Is(err, redis.Nil) {
-					c.Logger().Infof("no cached page found")
+					c.Logger().Info("no cached page found")
 				} else {
 					c.Logger().Errorf("failed getting cached page: %v", err)
 				}
@@ -35,7 +45,7 @@ func PageCache(ch *cache.Cache[any]) echo.MiddlewareFunc {
 			page, ok := res.(*CachedPage)
 
 			if !ok {
-				c.Logger().Infof("failed casting cached page")
+				c.Logger().Info("failed casting cached page")
 				return next(c)
 			}
 
@@ -44,7 +54,7 @@ func PageCache(ch *cache.Cache[any]) echo.MiddlewareFunc {
 					c.Response().Header().Set(k, v)
 				}
 			}
-			c.Logger().Infof("serving cached page")
+			c.Logger().Info("serving cached page")
 			return c.HTMLBlob(page.StatusCode, page.HTML)
 		}
 	}

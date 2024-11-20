@@ -15,6 +15,12 @@ import (
 func main() {
 	c := services.NewContainer()
 
+	defer func() {
+		if err := c.Shutdown(); err != nil {
+			c.Web.Logger.Fatal(err)
+		}
+	}()
+
 	handlers.BuildRouter(c)
 
 	go func() {
