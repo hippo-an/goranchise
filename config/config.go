@@ -40,6 +40,11 @@ type (
 		ReadTimeout  time.Duration
 		WriteTimeout time.Duration
 		IdleTimeout  time.Duration
+		TLS          struct {
+			Enabled     bool
+			Certificate string
+			Key         string
+		}
 	}
 
 	AppConfig struct {

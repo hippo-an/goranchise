@@ -26,39 +26,40 @@ func NewController(c *services.Container) Controller {
 	}
 }
 
-func (c *Controller) RenderPage(ctx echo.Context, p Page) error {
-	if p.PageName == "" {
+func (c *Controller) RenderPage(ctx echo.Context, page Page) error {
+	if page.PageName == "" {
 		ctx.Logger().Error("page render failed due to missing name")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 	}
 
-	if p.AppName == "" {
-		p.AppName = c.Container.Config.App.Name
+	if page.AppName == "" {
+		page.AppName = c.Container.Config.App.Name
 	}
 
-	if err := c.parsePageTemplates(p); err != nil {
-		ctx.Logger().Errorf("failed to parse templates: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
-	}
-
-	buf, err := c.executeTemplate(p)
+	buf, err := c.Container.TemplateRenderer.ParseAndExecute(
+		"controller",
+		page.PageName,
+		page.Layout,
+		[]string{
+			fmt.Sprintf("layouts/%s", page.Layout),
+			fmt.Sprintf("pages/%s", page.PageName),
+		},
+		[]string{"components"},
+		page,
+	)
 
 	if err != nil {
-		ctx.Logger().Errorf("failed to execute templates: %v", err)
+		ctx.Logger().Errorf("failed to parse and execute templates: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 	}
 
-	c.cachePage(ctx, p, buf)
+	c.cachePage(ctx, page, buf)
 
-	for k, v := range p.Headers {
+	for k, v := range page.Headers {
 		ctx.Response().Header().Set(k, v)
 	}
 
-	return ctx.HTMLBlob(p.StatusCode, buf.Bytes())
-}
-
-func (c *Controller) executeTemplate(page Page) (*bytes.Buffer, error) {
-	return c.Container.Templates.Execute("controller", page.PageName, page.Layout, page)
+	return ctx.HTMLBlob(page.StatusCode, buf.Bytes())
 }
 
 func (c *Controller) cachePage(ctx echo.Context, page Page, html *bytes.Buffer) {
@@ -93,19 +94,6 @@ func (c *Controller) cachePage(ctx echo.Context, page Page, html *bytes.Buffer) 
 	}
 
 	ctx.Logger().Infof("cached page for: %s", key)
-}
-
-func (c *Controller) parsePageTemplates(page Page) error {
-	return c.Container.Templates.Parse(
-		"controller",
-		page.PageName,
-		page.Layout,
-		[]string{
-			fmt.Sprintf("layouts/%s", page.Layout),
-			fmt.Sprintf("pages/%s", page.PageName),
-		},
-		[]string{"components"},
-	)
 }
 
 func (c *Controller) Redirect(ctx echo.Context, route string, routeParams ...interface{}) error {

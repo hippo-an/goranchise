@@ -114,13 +114,13 @@ func TestController_RenderPage(t *testing.T) {
 			assert.Equal(t, v, ctx.Response().Header().Get(k))
 		}
 
-		parsed, err := c.Templates.Load("controller", p.PageName)
+		parsed, err := c.TemplateRenderer.Load("controller", p.PageName)
 		assert.NoError(t, err)
 
 		expectedTemplates := make(map[string]bool)
 		expectedTemplates[p.PageName+config.TemplateExt] = true
 		expectedTemplates[p.Layout+config.TemplateExt] = true
-		components, err := os.ReadDir(c.Templates.GetTemplatesPath() + "/components")
+		components, err := os.ReadDir(c.TemplateRenderer.GetTemplatesPath() + "/components")
 		require.NoError(t, err)
 		for _, f := range components {
 			expectedTemplates[f.Name()] = true

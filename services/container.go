@@ -17,15 +17,15 @@ import (
 )
 
 type Container struct {
-	Web         *echo.Echo
-	Cache       *cache.Cache[any]
-	Config      *config.Config
-	cacheClient *redis.Client
-	Database    *sql.DB
-	ORM         *ent.Client
-	Auth        *AuthClient
-	Templates   *TemplateRenderer
-	Mail        *MailClient
+	Web              *echo.Echo
+	Cache            *cache.Cache[any]
+	Config           *config.Config
+	cacheClient      *redis.Client
+	Database         *sql.DB
+	ORM              *ent.Client
+	Auth             *AuthClient
+	TemplateRenderer *TemplateRenderer
+	Mail             *MailClient
 }
 
 func NewContainer() *Container {
@@ -137,9 +137,9 @@ func (c *Container) initAuth() {
 }
 
 func (c *Container) initTemplateRenderer() {
-	c.Templates = NewTemplateRenderer(c.Config)
+	c.TemplateRenderer = NewTemplateRenderer(c.Config)
 }
 
 func (c *Container) initMail() {
-	c.Mail = NewMailClient(c.Config, c.Templates)
+	c.Mail = NewMailClient(c.Config, c.TemplateRenderer)
 }

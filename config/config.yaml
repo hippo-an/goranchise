@@ -4,6 +4,10 @@ http:
   readTimeout: "5s"
   writeTimeout: "10s"
   idleTimeout: "2m"
+  tls:
+    enabled: false
+    certificate: ""
+    key: ""
 
 app:
   name: "Goranchise"

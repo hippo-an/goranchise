@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/sessions"
+	"github.com/hippo-an/goranchise/config"
 	"github.com/hippo-an/goranchise/controller"
 	"github.com/hippo-an/goranchise/middleware"
 	"github.com/hippo-an/goranchise/services"
@@ -25,9 +26,13 @@ func (v *Validator) Validate(i interface{}) error {
 func BuildRouter(c *services.Container) {
 
 	c.Web.Group("", middleware.CacheControl(c.Config.Cache.Expiration.StaticFile)).
-		Static("/public", PublicDir)
+		Static("/public", config.PublicDir)
 	c.Web.Group("", middleware.CacheControl(c.Config.Cache.Expiration.StaticFile)).
-		Static("/static", StaticDir)
+		Static("/static", config.StaticDir)
+
+	if c.Config.Http.TLS.Enabled {
+		c.Web.Use(echomw.HTTPSRedirect())
+	}
 
 	c.Web.Use(
 		echomw.RemoveTrailingSlashWithConfig(
@@ -44,12 +49,12 @@ func BuildRouter(c *services.Container) {
 		echomw.TimeoutWithConfig(echomw.TimeoutConfig{
 			Timeout: c.Config.App.Timeout,
 		}),
+		middleware.LoadAuthenticatedUser(c.Auth),
 		middleware.ServeCachedPage(c.Cache),
 		session.Middleware(sessions.NewCookieStore([]byte(c.Config.App.EncryptionKey))),
 		echomw.CSRFWithConfig(echomw.CSRFConfig{
 			TokenLookup: "form:csrf",
 		}),
-		middleware.LoadAuthenticatedUser(c.Auth),
 	)
 
 	c.Web.Validator = &Validator{validator: validator.New()}

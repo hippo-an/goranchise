@@ -93,6 +93,18 @@ func (t *TemplateRenderer) Parse(module, key, name string, files []string, direc
 	return nil
 }
 
+func (t *TemplateRenderer) ParseAndExecute(module, key, layoutName string, files, directories []string, data interface{}) (*bytes.Buffer, error) {
+	var buf *bytes.Buffer
+	var err error
+	if err = t.Parse(module, key, layoutName, files, directories); err != nil {
+		return nil, err
+	}
+	if buf, err = t.Execute(module, key, layoutName, data); err != nil {
+		return nil, err
+	}
+	return buf, nil
+}
+
 func (t *TemplateRenderer) getCacheKey(module, key string) string {
 	return fmt.Sprintf("%s:%s", module, key)
 }
