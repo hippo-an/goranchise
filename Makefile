@@ -1,3 +1,8 @@
+.PHONY: run
+run: ready wait air
+	@echo "Successfully run the goranchise application"
+
+
 .PHONY: install-tailwindcss
 install-tailwindcss:
 	@sh < ./scripts/install_tailwindcss.sh
@@ -19,10 +24,6 @@ gen-model:
 .PHONY: ent
 ent:
 	@go generate ./ent
-
-.PHONY: run
-run: ready wait air
-	echo "Successfully run the goranchise application"
 
 .PHONY: ready
 ready:

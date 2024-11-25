@@ -16,4 +16,5 @@ func TestGetConfig(t *testing.T) {
 	cfg, err := GetConfig()
 	require.NoError(t, err)
 	assert.Equal(t, env, cfg.App.Environment)
+	SwitchEnvironment("test")
 }

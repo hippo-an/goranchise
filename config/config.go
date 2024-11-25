@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/spf13/viper"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -108,11 +109,27 @@ func GetConfig() (Config, error) {
 		return c, err
 	}
 
+	log.Printf("%+v\n", viper.AllSettings())
+
 	return c, nil
 }
 
 func SwitchEnvironment(env Environment) {
-	if err := os.Setenv("APP_ENVIRONMENT", string(env)); err != nil {
+	SetEnvironmentVariable("GORANCHISE_APP_ENVIRONMENT", string(env))
+}
+
+func SwitchDatabaseHostAndPort(host, port string) {
+	SetEnvironmentVariable("GORANCHISE_DATABASE_HOSTNAME", host)
+	SetEnvironmentVariable("GORANCHISE_DATABASE_PORT", port)
+}
+
+func SwitchCacheHostAndPort(host, port string) {
+	SetEnvironmentVariable("GORANCHISE_CACHE_HOSTNAME", host)
+	SetEnvironmentVariable("GORANCHISE_CACHE_PORT", port)
+}
+
+func SetEnvironmentVariable(key, value string) {
+	if err := os.Setenv(key, value); err != nil {
 		panic(err)
 	}
 }

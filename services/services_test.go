@@ -4,11 +4,10 @@ import (
 	"context"
 	"github.com/hippo-an/goranchise/config"
 	"github.com/hippo-an/goranchise/ent"
+	"github.com/hippo-an/goranchise/tests"
 	"github.com/labstack/echo/v4"
-	"net/http"
 	"net/http/httptest"
 	"os"
-	"strings"
 	"testing"
 )
 
@@ -20,10 +19,14 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	// Set the environment to test
 	config.SwitchEnvironment(config.EnvironmentTest)
 
-	// Create a new services
+	con, err := tests.RunTestDB()
+	if err != nil {
+		panic(err)
+	}
+	defer con.Terminate(context.Background())
+
 	c = NewContainer()
 
 	defer func() {
@@ -32,17 +35,10 @@ func TestMain(m *testing.M) {
 		}
 	}()
 
-	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(""))
-	rec = httptest.NewRecorder()
-	ctx = c.Web.NewContext(req, rec)
+	ctx, _ = tests.NewContext(c.Web, "/")
+	tests.InitSession(ctx)
 
-	var err error
-	usr, err = c.ORM.User.
-		Create().
-		SetEmail("test@test.dev").
-		SetPassword("abc").
-		SetName("Test User").
-		Save(context.Background())
+	usr, err = tests.CreateUser(c.ORM)
 	if err != nil {
 		panic(err)
 	}

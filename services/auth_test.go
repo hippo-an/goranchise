@@ -2,19 +2,12 @@ package services
 
 import (
 	"errors"
-	"github.com/gorilla/sessions"
-	"github.com/labstack/echo-contrib/session"
-	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func TestAuth(t *testing.T) {
-	mw := session.Middleware(sessions.NewCookieStore([]byte("secret")))
-	handler := mw(echo.NotFoundHandler)
-	assert.Error(t, handler(ctx))
-
 	assertNoAuth := func() {
 		_, err := c.Auth.GetAuthenticatedUserId(ctx)
 		assert.True(t, errors.Is(err, NotAuthenticatedError{}))

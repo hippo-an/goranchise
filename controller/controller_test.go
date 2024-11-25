@@ -10,6 +10,7 @@ import (
 	"github.com/hippo-an/goranchise/middleware"
 	"github.com/hippo-an/goranchise/msg"
 	"github.com/hippo-an/goranchise/services"
+	"github.com/hippo-an/goranchise/tests"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -27,6 +28,17 @@ var (
 
 func TestMain(m *testing.M) {
 	config.SwitchEnvironment(config.EnvironmentTest)
+	dbCon, err := tests.RunTestDB()
+	if err != nil {
+		panic(err)
+	}
+	defer dbCon.Terminate(context.Background())
+
+	cacheCon, err := tests.RunTestCache()
+	if err != nil {
+		panic(err)
+	}
+	defer cacheCon.Terminate(context.Background())
 
 	c = services.NewContainer()
 
@@ -35,6 +47,7 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 	}()
+
 	exitCode := m.Run()
 
 	os.Exit(exitCode)
@@ -73,7 +86,7 @@ func TestController_SetValidationErrorMessages(t *testing.T) {
 	err := v.Struct(e)
 	require.Error(t, err)
 
-	ctx, _ := newContext("/")
+	ctx, _ := tests.NewContext(c.Web, "/")
 	initSession(t, ctx)
 	ctr := NewController(c)
 	ctr.SetValidationErrorMessages(ctx, err, e)
@@ -84,8 +97,8 @@ func TestController_SetValidationErrorMessages(t *testing.T) {
 
 func TestController_RenderPage(t *testing.T) {
 	setup := func() (echo.Context, *httptest.ResponseRecorder, Controller, Page) {
-		ctx, rec := newContext("/test/TestController_RenderPage")
-		initSession(t, ctx)
+		ctx, rec := tests.NewContext(c.Web, "/test/TestController_RenderPage")
+		tests.InitSession(ctx)
 		ctr := NewController(c)
 		p := NewPage(ctx)
 		p.PageName = "home"

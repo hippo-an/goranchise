@@ -98,10 +98,11 @@ func (c *Container) initCache() {
 func (c *Container) initDatabase() {
 
 	getAddr := func(dbName string) string {
-		return fmt.Sprintf("postgresql://%s:%s@%s/%s",
+		return fmt.Sprintf("postgresql://%s:%s@%s:%d/%s",
 			c.Config.Database.User,
 			c.Config.Database.Password,
 			c.Config.Database.Hostname,
+			c.Config.Database.Port,
 			dbName,
 		)
 	}
@@ -113,14 +114,20 @@ func (c *Container) initDatabase() {
 			panic(fmt.Sprintf("failed to connect to database: %v", err))
 		}
 		c.Database = driver.DB()
+		c.Web.Logger.Info("Connected to env test environment database")
 	case config.EnvironmentLocal:
 		driver, err := entsql.Open("pgx", getAddr(c.Config.Database.Database))
 		if err != nil {
 			panic(fmt.Sprintf("failed to connect to database: %v", err))
 		}
 		c.Database = driver.DB()
+		c.Web.Logger.Info("Connected to env test environment database")
 	case config.EnvironmentProd:
 	default:
+	}
+
+	if err := c.Database.Ping(); err != nil {
+		panic(fmt.Sprintf("failed to ping database: %v", err))
 	}
 }
 

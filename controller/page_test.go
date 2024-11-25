@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/hippo-an/goranchise/context"
 	"github.com/hippo-an/goranchise/msg"
+	"github.com/hippo-an/goranchise/tests"
 	echomw "github.com/labstack/echo/v4/middleware"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -43,7 +44,7 @@ func TestNewPage(t *testing.T) {
 }
 
 func TestPage_GetMessages(t *testing.T) {
-	ctx, _ := newContext("/")
+	ctx, _ := tests.NewContext(c.Web, "/")
 
 	p := NewPage(ctx)
 	initSession(t, ctx)

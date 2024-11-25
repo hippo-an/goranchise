@@ -11,5 +11,5 @@ services:
       - "5432:5432"
     environment:
       - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=admin
+      - POSTGRES_PASSWORD=admin1234
       - POSTGRES_DB=goranchise

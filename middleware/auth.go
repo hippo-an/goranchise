@@ -19,7 +19,7 @@ func LoadAuthenticatedUser(authClient *services.AuthClient) echo.MiddlewareFunc 
 				case services.NotAuthenticatedError:
 				case nil:
 					c.Set(context.AuthenticatedUserKey, user)
-					c.Logger().Info("auth user loaded in to context: %d", user.ID)
+					c.Logger().Infof("auth user loaded in to context: %d", user.ID)
 				default:
 					c.Logger().Errorf("error querying for authenticated user: %v", err)
 				}
