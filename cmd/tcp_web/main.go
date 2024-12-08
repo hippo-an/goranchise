@@ -67,8 +67,6 @@ func handleBroadcast() {
 				fmt.Fprintln(conn, string(msg))
 			}
 			mutex.Unlock()
-		default:
-
 		}
 	}
 }
