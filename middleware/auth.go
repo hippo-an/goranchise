@@ -36,28 +36,29 @@ func LoadValidPasswordToken(a *services.AuthClient) echo.MiddlewareFunc {
 			var u *ent.User
 			cu := c.Get(context.UserKey)
 			if cu == nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 			u = cu.(*ent.User)
 
-			tokenPathParam := c.Param("password_token")
-			if tokenPathParam == "" {
+			passwordToken := c.Param(context.PasswordTokenKey)
+			if passwordToken == "" {
 				c.Logger().Warn("missing password token path parameter")
-				return echo.NewHTTPError(http.StatusNotFound, "not fount password token")
+				return echo.NewHTTPError(http.StatusNotFound, "not found password token")
 			}
 
-			_, err := a.GetValidPasswordToken(c, tokenPathParam, u.ID)
+			token, err := a.GetValidPasswordToken(c, passwordToken, u.ID)
+
 			switch err.(type) {
 			case nil:
+				c.Set(context.PasswordTokenKey, token)
+				return next(c)
 			case services.InvalidPasswordTokenError:
 				msg.Warning(c, "The link is either invalid or has expired. Please request a new one.")
 				return c.Redirect(http.StatusFound, c.Echo().Reverse("forgot_password"))
 			default:
 				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
-
-			return next(c)
 		}
 	}
 }
@@ -66,7 +67,7 @@ func RequireAuthentication() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			if u := c.Get(context.AuthenticatedUserKey); u == nil {
-				return echo.NewHTTPError(http.StatusUnauthorized, "Unauthorized")
+				return echo.NewHTTPError(http.StatusUnauthorized)
 			}
 			return next(c)
 		}
@@ -77,7 +78,7 @@ func RequireNoAuthentication() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			if u := c.Get(context.AuthenticatedUserKey); u != nil {
-				return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+				return echo.NewHTTPError(http.StatusForbidden)
 			}
 			return next(c)
 		}

@@ -15,24 +15,23 @@ func LoadUser(orm *ent.Client) echo.MiddlewareFunc {
 
 			userId, err := strconv.Atoi(c.Param("userId"))
 			if err != nil {
-				return echo.NewHTTPError(http.StatusNotFound, "Not found")
+				return echo.NewHTTPError(http.StatusNotFound)
 			}
 
 			u, err := orm.User.Query().
 				Where(user.ID(userId)).
 				Only(c.Request().Context())
+
 			switch err.(type) {
 			case nil:
+				c.Set(context.UserKey, u)
+				return next(c)
 			case *ent.NotFoundError:
-				return echo.NewHTTPError(http.StatusNotFound, "Not found")
+				return echo.NewHTTPError(http.StatusNotFound)
 			default:
 				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
-
-			c.Set(context.UserKey, u)
-
-			return next(c)
 		}
 	}
 }

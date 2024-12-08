@@ -121,7 +121,7 @@ func (c *Container) initDatabase() {
 			panic(fmt.Sprintf("failed to connect to database: %v", err))
 		}
 		c.Database = driver.DB()
-		c.Web.Logger.Info("Connected to env test environment database")
+		c.Web.Logger.Info("Connected to env local environment database")
 	case config.EnvironmentProd:
 	default:
 	}

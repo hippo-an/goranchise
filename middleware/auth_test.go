@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"fmt"
 	"github.com/hippo-an/goranchise/context"
 	"github.com/hippo-an/goranchise/ent"
 	"github.com/hippo-an/goranchise/tests"
@@ -55,17 +56,49 @@ func TestRequireNoAuthentication(t *testing.T) {
 	tests.InitSession(ctx)
 
 	err := tests.ExecuteMiddleware(ctx, RequireNoAuthentication())
-	var httpError *echo.HTTPError
-	ok := errors.As(err, &httpError)
-	require.True(t, ok)
-	assert.NotEqual(t, http.StatusForbidden, httpError.Code)
+	tests.AssertHTTPErrorCodeNot(t, err, http.StatusForbidden)
 
 	err = c.Auth.Login(ctx, usr.ID)
 	require.NoError(t, err)
 	_ = tests.ExecuteMiddleware(ctx, LoadAuthenticatedUser(c.Auth))
 
 	err = tests.ExecuteMiddleware(ctx, RequireNoAuthentication())
-	ok = errors.As(err, &httpError)
+	tests.AssertHTTPErrorCode(t, err, http.StatusForbidden)
+}
+
+func TestLoadValidPasswordToken(t *testing.T) {
+	ctx, _ := tests.NewContext(c.Web, "/")
+	tests.InitSession(ctx)
+
+	err := tests.ExecuteMiddleware(ctx, LoadValidPasswordToken(c.Auth))
+	tests.AssertHTTPErrorCode(t, err, http.StatusInternalServerError)
+
+	userId, passwordToken := "userId", "password_token"
+
+	ctx.SetParamNames(userId)
+	ctx.SetParamValues(fmt.Sprintf("%d", usr.ID))
+	_ = tests.ExecuteMiddleware(ctx, LoadUser(c.ORM))
+	err = tests.ExecuteMiddleware(ctx, LoadValidPasswordToken(c.Auth))
+	assert.Error(t, err)
+	tests.AssertHTTPErrorCode(t, err, http.StatusNotFound)
+
+	ctx.SetParamNames(userId, passwordToken)
+	ctx.SetParamValues(fmt.Sprintf("%d", usr.ID), "faketoken")
+	_ = tests.ExecuteMiddleware(ctx, LoadUser(c.ORM))
+	err = tests.ExecuteMiddleware(ctx, LoadValidPasswordToken(c.Auth))
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusFound, ctx.Response().Status)
+
+	token, pt, err := c.Auth.GeneratePasswordResetToken(ctx, usr.ID)
+	require.NoError(t, err)
+
+	ctx.SetParamNames(userId, passwordToken)
+	ctx.SetParamValues(fmt.Sprintf("%d", usr.ID), token)
+	_ = tests.ExecuteMiddleware(ctx, LoadUser(c.ORM))
+	err = tests.ExecuteMiddleware(ctx, LoadValidPasswordToken(c.Auth))
+	tests.AssertHTTPErrorCode(t, err, http.StatusNotFound)
+	ctxPt, ok := ctx.Get(context.PasswordTokenKey).(*ent.PasswordToken)
 	require.True(t, ok)
-	assert.Equal(t, http.StatusForbidden, httpError.Code)
+	assert.Equal(t, pt.ID, ctxPt.ID)
+	assert.Equal(t, pt.Hash, ctxPt.Hash)
 }

@@ -23,6 +23,12 @@ func TestMain(m *testing.M) {
 	}
 	defer con.Terminate(context.Background())
 
+	cacheCon, err := tests.RunTestCache()
+	if err != nil {
+		panic(err)
+	}
+	defer cacheCon.Terminate(context.Background())
+
 	c = services.NewContainer()
 
 	defer func() {

@@ -31,7 +31,12 @@ func ServeCachedPage(ch *cache.Cache[any]) echo.MiddlewareFunc {
 				return next(c)
 			}
 
-			res, err := marshaler.New(ch).Get(c.Request().Context(), c.Request().URL.String(), new(CachedPage))
+			res, err := marshaler.New(ch).
+				Get(
+					c.Request().Context(),
+					c.Request().URL.String(),
+					new(CachedPage),
+				)
 
 			if err != nil {
 				if errors.Is(err, redis.Nil) {
@@ -66,7 +71,7 @@ func CacheControl(maxAge time.Duration) echo.MiddlewareFunc {
 			v := "no-cache, no-store"
 
 			if maxAge > 0 {
-				v = fmt.Sprintf("public,max-age=%.0f", maxAge.Seconds())
+				v = fmt.Sprintf("public, max-age=%.0f", maxAge.Seconds())
 			}
 
 			c.Response().Header().Set("Cache-Control", v)

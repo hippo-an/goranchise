@@ -2,12 +2,15 @@ package tests
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/go-playground/assert/v2"
 	"github.com/gorilla/sessions"
 	"github.com/hippo-an/goranchise/config"
 	"github.com/hippo-an/goranchise/ent"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"log"
@@ -15,6 +18,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"testing"
 	"time"
 )
 
@@ -135,4 +139,18 @@ func SwitchCacheToContainer(con testcontainers.Container) error {
 
 	config.SwitchCacheHostAndPort(host, port.Port())
 	return nil
+}
+
+func AssertHTTPErrorCode(t *testing.T, err error, code int) {
+	var httpError *echo.HTTPError
+	ok := errors.As(err, &httpError)
+	require.True(t, ok)
+	assert.Equal(t, code, httpError.Code)
+}
+
+func AssertHTTPErrorCodeNot(t *testing.T, err error, code int) {
+	var httpError *echo.HTTPError
+	ok := errors.As(err, &httpError)
+	require.True(t, ok)
+	assert.NotEqual(t, code, httpError.Code)
 }
